@@ -304,6 +304,16 @@
             text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
         }
 
+        .friend-label {
+            padding: 4px 10px;
+            background: rgba(0, 255, 65, 0.15);
+            color: #00ff41;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 999px;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+        }
+
         /* 手机端适配：抬高位置避免被可能的底部UI遮挡 */
         @media screen and (max-width: 768px) {
             .friend-link { 
@@ -329,6 +339,7 @@
     <a href="https://kangqiovo.com" target="_blank" class="friend-link">
         <!-- 增加 onerror 处理防止图标加载失败 -->
         <img src="KangQi_.png" alt="KangQi" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23222%22 stroke=%22%23555%22 stroke-width=%225%22/><text x=%2250%22 y=%2260%22 font-family=%22sans-serif%22 font-size=%2240%22 fill=%22%23fff%22 text-anchor=%22middle%22>K</text></svg>';">
+        <span class="friend-label">友链</span>
         <span>KangQi</span>
     </a>
 
