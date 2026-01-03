@@ -101,6 +101,10 @@
             opacity: 0.92;
             position: absolute;
             line-height: 1.4;
+            transition: opacity 1s ease;
+        }
+        .code-line.fade-out {
+            opacity: 0;
         }
 
         #start-btn {
@@ -793,6 +797,7 @@
         let isTestRunning = false;
         let introFinished = false;
         let codeRainTimer = null;
+        const activeCodeSpots = [];
 
         const introCodeLines = [
             "init buffer := {}",
@@ -820,11 +825,33 @@
             if (!stream) return;
             const line = document.createElement('div');
             line.className = 'code-line';
-            const posX = 2 + Math.random() * 92;
-            const posY = 6 + Math.random() * 88;
+            // 清理过期的点位记录
+            const now = performance.now();
+            for (let i = activeCodeSpots.length - 1; i >= 0; i--) {
+                if (activeCodeSpots[i].expires <= now) activeCodeSpots.splice(i, 1);
+            }
+
+            let posX = 2 + Math.random() * 92;
+            let posY = 6 + Math.random() * 88;
+            const minDistance = 12; // 尽量不要同时重合
+            let attempts = 0;
+            while (attempts < 10) {
+                const conflict = activeCodeSpots.some(({ x, y }) => {
+                    const dx = x - posX;
+                    const dy = y - posY;
+                    return Math.sqrt(dx * dx + dy * dy) < minDistance;
+                });
+                if (!conflict) break;
+                posX = 2 + Math.random() * 92;
+                posY = 6 + Math.random() * 88;
+                attempts++;
+            }
             line.style.left = `${posX}%`;
             line.style.top = `${posY}%`;
             stream.appendChild(line);
+
+            const lifetime = 4200 + Math.random() * 1800;
+            activeCodeSpots.push({ x: posX, y: posY, expires: now + lifetime + 800 });
 
             let idx = 0;
             const typeTick = () => {
@@ -837,6 +864,11 @@
                 }
             };
             typeTick();
+
+            setTimeout(() => {
+                line.classList.add('fade-out');
+                setTimeout(() => line.remove(), 1100);
+            }, lifetime);
         }
 
         function startCodeRain() {
