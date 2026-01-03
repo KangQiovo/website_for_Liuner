@@ -12,6 +12,7 @@ const headers = {
 };
 
 function loadMessages() {
+  ensureDataFile();
   try {
     const raw = fs.readFileSync(DATA_FILE, 'utf-8');
     const parsed = JSON.parse(raw);
@@ -27,6 +28,17 @@ function persistMessages(messages) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(messages, null, 2), 'utf-8');
   } catch (err) {
     console.error('Failed to persist messages:', err);
+  }
+}
+
+function ensureDataFile() {
+  try {
+    fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
+    if (!fs.existsSync(DATA_FILE)) {
+      fs.writeFileSync(DATA_FILE, '[]', 'utf-8');
+    }
+  } catch (err) {
+    console.error('Failed to initialize messages file:', err);
   }
 }
 
@@ -80,6 +92,7 @@ const server = http.createServer((req, res) => {
   res.end();
 });
 
+ensureDataFile();
 server.listen(PORT, () => {
   console.log(`Message board backend running on http://localhost:${PORT}/api/messages`);
 });
