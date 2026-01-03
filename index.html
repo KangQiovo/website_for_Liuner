@@ -19,7 +19,11 @@
         /* 作者页面的渐变背景层 */
         #author-bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #1a0020 0%, #050010 50%, #001020 100%);
+            background:
+                linear-gradient(135deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.75)),
+                url('bg.jpg');
+            background-size: cover;
+            background-position: center;
             z-index: -1; opacity: 0; transition: opacity 0.8s ease-in-out; pointer-events: none;
         }
         #author-bg-layer.visible { opacity: 1; }
@@ -223,7 +227,14 @@
             background: transparent; position: relative;
         }
         .embed-container iframe { width: 100%; height: 100%; border: none; display: block; }
-        .rank-iframe-wrapper { width: 100%; height: 100%; filter: invert(0.92) hue-rotate(180deg) contrast(0.9); background: #fff; }
+        .rank-iframe-wrapper {
+            width: 100%;
+            height: 100%;
+            filter: invert(1) hue-rotate(180deg) contrast(0.95) brightness(0.9);
+            background: #000;
+            color-scheme: dark;
+        }
+        .rank-iframe-wrapper iframe { background: #000; color-scheme: dark; }
 
         /* 留言板 (Love Panel) 调整 */
         #love-panel { border-color: rgba(255, 0, 85, 0.4); box-shadow: 0 0 45px rgba(255, 0, 85, 0.2); height: 70vh; justify-content: center; align-items: center; }
@@ -590,6 +601,9 @@
 
         // Try-catch block for JSON parsing to prevent white screen of death
         let firebaseConfig = null;
+        let backendPollTimer = null;
+        const backendPollInterval = 10000;
+        window.sendMessageHandler = null;
         try {
             // Check if variable exists before using it to avoid ReferenceError
             if (typeof __firebase_config !== 'undefined') {
@@ -637,13 +651,9 @@
                     showToast("SEND FAILED");
                 }
             };
+            window.sendMessageHandler = window.saveMessageToFirebase;
         } else {
-             // Handle offline mode nicely
-             document.getElementById('message-list').innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; margin-top:20px;">DATABASE OFFLINE</div>';
-             const offlineInput = document.getElementById('love-input');
-             const offlineBtn = document.getElementById('send-love-btn');
-             if (offlineInput) { offlineInput.disabled = true; offlineInput.placeholder = '数据库离线，暂不可用'; offlineInput.style.opacity = '0.6'; }
-             if (offlineBtn) { offlineBtn.disabled = true; offlineBtn.style.opacity = '0.6'; offlineBtn.innerText = 'OFFLINE'; }
+            initCustomBackendBridge();
         }
 
         // 监听留言
@@ -661,26 +671,108 @@
                 // 前端排序：按时间倒序
                 messages.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
 
-                msgListEl.innerHTML = '';
-                if (messages.length === 0) {
-                    msgListEl.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; margin-top:20px;">NO MESSAGES YET</div>';
-                    return;
-                }
+                renderMessages(msgListEl, messages);
+            }, (error) => {
+                console.error("Error fetching messages:", error);
+                msgListEl.innerHTML = '<div style="text-align:center; color:#ff0055; font-size:0.8rem; margin-top:20px;">CONNECTION FAILED</div>';
+            });
+        }
 
-                messages.forEach(msg => {
+        async function initCustomBackendBridge() {
+            const msgListEl = document.getElementById('message-list');
+            const inputEl = document.getElementById('love-input');
+            const btnEl = document.getElementById('send-love-btn');
+            const apiBase = (typeof __message_api_base !== 'undefined' && __message_api_base) ? __message_api_base : null;
+
+            if (!apiBase) {
+                setLoveBoardDisabled('数据库离线，等待后端接入');
+                return;
+            }
+
+            if (msgListEl) msgListEl.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.6); font-size:0.8rem; margin-top:20px;">CONNECTING TO BACKEND...</div>';
+
+            const loadMessages = async () => {
+                try {
+                    const res = await fetch(`${apiBase}/messages`, { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) throw new Error('Bad status');
+                    const payload = await res.json();
+                    const messages = Array.isArray(payload) ? payload : (payload?.data || []);
+                    renderMessages(msgListEl, messages);
+                } catch (err) {
+                    console.error('Backend fetch failed', err);
+                    if (msgListEl) msgListEl.innerHTML = '<div style="text-align:center; color:#ff0055; font-size:0.8rem; margin-top:20px;">BACKEND UNREACHABLE</div>';
+                }
+            };
+
+            window.sendMessageHandler = async (text) => {
+                if (!text) return;
+                try {
+                    if (btnEl) btnEl.disabled = true;
+                    if (inputEl) inputEl.disabled = true;
+                    if (btnEl) btnEl.textContent = 'SENDING...';
+                    const res = await fetch(`${apiBase}/messages`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text })
+                    });
+                    if (!res.ok) throw new Error('Post failed');
+                    await loadMessages();
+                    showToast('TRANSMITTED');
+                } catch (err) {
+                    console.error('Backend post failed', err);
+                    showToast('BACKEND ERROR');
+                } finally {
+                    if (btnEl) btnEl.disabled = false;
+                    if (inputEl) inputEl.disabled = false;
+                    if (btnEl) btnEl.textContent = 'TRANSMIT';
+                }
+            };
+
+            if (btnEl) btnEl.disabled = false;
+            if (inputEl) { inputEl.disabled = false; inputEl.placeholder = '在此输入...'; inputEl.style.opacity = '1'; }
+            await loadMessages();
+            backendPollTimer = setInterval(loadMessages, backendPollInterval);
+        }
+
+        function renderMessages(msgListEl, messages) {
+            if (!msgListEl) return;
+            msgListEl.innerHTML = '';
+            if (!messages || messages.length === 0) {
+                msgListEl.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; margin-top:20px;">NO MESSAGES YET</div>';
+                return;
+            }
+
+            messages
+                .map(msg => ({
+                    text: msg.text || msg.message || '',
+                    timestamp: msg.timestamp || msg.createdAt || msg.created_at || null
+                }))
+                .sort((a, b) => {
+                    const ta = typeof a.timestamp === 'object' && a.timestamp?.seconds ? a.timestamp.seconds * 1000 : Date.parse(a.timestamp) || 0;
+                    const tb = typeof b.timestamp === 'object' && b.timestamp?.seconds ? b.timestamp.seconds * 1000 : Date.parse(b.timestamp) || 0;
+                    return tb - ta;
+                })
+                .forEach(msg => {
                     const div = document.createElement('div');
                     div.className = 'message-item';
-                    const timeStr = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleString() : 'Just now';
+                    const t = msg.timestamp;
+                    const ts = (typeof t === 'object' && t?.seconds) ? new Date(t.seconds * 1000) : (t ? new Date(t) : new Date());
+                    const timeStr = ts.toLocaleString();
                     div.innerHTML = `
                         <div class="msg-text">${escapeHtml(msg.text)}</div>
                         <div class="msg-time">${timeStr}</div>
                     `;
                     msgListEl.appendChild(div);
                 });
-            }, (error) => {
-                console.error("Error fetching messages:", error);
-                msgListEl.innerHTML = '<div style="text-align:center; color:#ff0055; font-size:0.8rem; margin-top:20px;">CONNECTION FAILED</div>';
-            });
+        }
+
+        function setLoveBoardDisabled(text) {
+            const msgListEl = document.getElementById('message-list');
+            const offlineInput = document.getElementById('love-input');
+            const offlineBtn = document.getElementById('send-love-btn');
+            if (msgListEl) msgListEl.innerHTML = `<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; margin-top:20px;">${text}</div>`;
+            if (offlineInput) { offlineInput.disabled = true; offlineInput.placeholder = text; offlineInput.style.opacity = '0.6'; }
+            if (offlineBtn) { offlineBtn.disabled = true; offlineBtn.style.opacity = '0.6'; offlineBtn.innerText = 'OFFLINE'; }
         }
 
         function escapeHtml(text) {
@@ -1109,9 +1201,11 @@
             }
             container.appendChild(fragment);
 
-            // 保存到 Firebase
-            if(window.saveMessageToFirebase) {
-                window.saveMessageToFirebase(val);
+            // 交给后端/Firestore
+            if (window.sendMessageHandler) {
+                window.sendMessageHandler(val);
+            } else {
+                showToast('SERVICE OFFLINE');
             }
 
             // 恢复输入框
