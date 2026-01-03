@@ -994,7 +994,11 @@
             statusEl.innerText = "RUNNING...";
             updateSpeedUI(0);
 
-            for(let i=0; i<6; i++) {
+            const testStart = performance.now();
+            let round = 0;
+
+            while ((performance.now() - testStart) < 20000) {
+                round++;
                 try {
                     const tsStart = performance.now();
                     const resp = await fetch(targetUrl + '?t=' + Math.random(), { cache: 'no-store', mode: 'cors' });
@@ -1010,7 +1014,7 @@
                     if (speedMbps < 0 || !Number.isFinite(speedMbps)) speedMbps = 0;
 
                     updateSpeedUI(speedMbps);
-                    statusEl.innerText = `ROUND ${i+1}/6`;
+                    statusEl.innerText = `ROUND ${round}`;
                 } catch (err) {
                     const fallbackSpeed = 10 + Math.random() * 10;
                     updateSpeedUI(fallbackSpeed);
