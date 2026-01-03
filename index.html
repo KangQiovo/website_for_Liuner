@@ -167,9 +167,13 @@
         #love-panel { border-color: rgba(255, 0, 85, 0.4); box-shadow: 0 0 45px rgba(255, 0, 85, 0.2); height: 70vh; justify-content: center; align-items: center; }
         .signal-shell {
             width: min(520px, 100%);
-            background: radial-gradient(circle at 20% 20%, rgba(255,0,85,0.1), rgba(0,0,0,0.6) 45%),
-                        radial-gradient(circle at 80% 0%, rgba(0,255,255,0.08), rgba(0,0,0,0.6) 35%),
-                        rgba(5,5,5,0.8);
+            background:
+                linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.85)),
+                radial-gradient(circle at 20% 20%, rgba(255,0,85,0.08), rgba(0,0,0,0.5) 45%),
+                radial-gradient(circle at 80% 0%, rgba(0,255,255,0.08), rgba(0,0,0,0.5) 35%),
+                url('icon.jpg');
+            background-size: cover;
+            background-position: center;
             border: 1px solid rgba(255, 0, 85, 0.5);
             border-radius: 18px;
             padding: 26px 28px;
@@ -475,8 +479,8 @@
         <!-- 留言板板块 -->
         <div id="love-panel" class="content-panel">
             <div class="signal-shell">
-                <h2 class="signal-title">SECRET SIGNAL</h2>
-                <div class="signal-subtitle">TYPE MESSAGE (MAX 10 CHARS · VISIBLE TO EVERYONE)</div>
+                <h2 class="signal-title">输入你所想</h2>
+                <div class="signal-subtitle">最多 10 字，所有访问者可见</div>
 
                 <div id="message-list">
                     <!-- Messages will appear here -->
@@ -572,6 +576,10 @@
         } else {
              // Handle offline mode nicely
              document.getElementById('message-list').innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; margin-top:20px;">DATABASE OFFLINE</div>';
+             const offlineInput = document.getElementById('love-input');
+             const offlineBtn = document.getElementById('send-love-btn');
+             if (offlineInput) { offlineInput.disabled = true; offlineInput.placeholder = '数据库离线，暂不可用'; offlineInput.style.opacity = '0.6'; }
+             if (offlineBtn) { offlineBtn.disabled = true; offlineBtn.style.opacity = '0.6'; offlineBtn.innerText = 'OFFLINE'; }
         }
 
         // 监听留言
