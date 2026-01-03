@@ -59,3 +59,18 @@ Message board backend running on http://localhost:8787/api/messages
 - **跨域**：服务默认允许任意来源（`Access-Control-Allow-Origin: *`），如需收敛来源，可在 `server.js` 中调整。
 
 完成上述配置后，前端可将 API 地址指向 `https://你的域名/api/messages`（若做了反代）或 `http://服务器IP:8787/api/messages` 直接访问。
+
+## 8. 在宝塔环境快速使用（端到端示例）
+1. **上传代码**：在宝塔文件管理里进入 `/www/wwwroot/liuner.top`，新建 `backend` 文件夹并上传本仓库 `backend` 下的全部文件。
+2. **创建 PM2 项目**：按上文步骤在「Node 项目管理」里添加 PM2 项目，端口默认 `8787`（或自定义）。
+3. **反代到同域**：在 `liuner.top` 站点「设置 → 反向代理」里，新建规则：
+   - 代理目录：`/api/messages`
+   - 代理目标：`http://127.0.0.1:8787/api/messages`
+   - 关闭缓存，保存并开启
+4. **前端指向接口**：
+   - 在站点根目录的 `index.html` `<head>` 中，临近其他配置脚本位置加入：
+     ```html
+     <script>var __message_api_base = 'https://liuner.top/api';</script>
+     ```
+   - 若不方便改前端文件，也可在反代里把路径写成 `/api`（目标 `http://127.0.0.1:8787/api`），此时无需额外脚本。
+5. **启动并验证**：重启 PM2 项目后，在浏览器访问站点，留言板应显示并可发布消息；如失败，在 PM2 日志查看错误并确认防火墙已放行。
