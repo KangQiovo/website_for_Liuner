@@ -18,7 +18,7 @@
         
         /* 作者页面的渐变背景层 */
         #author-bg-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 240px; width: calc(100% - 240px); height: 100%;
             background:
                 linear-gradient(135deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.75)),
                 url('bg.jpg');
@@ -27,6 +27,14 @@
             z-index: -1; opacity: 0; transition: opacity 0.8s ease-in-out; pointer-events: none;
         }
         #author-bg-layer.visible { opacity: 1; }
+
+        @media screen and (max-width: 768px) {
+            #author-bg-layer {
+                left: 0;
+                width: 100%;
+                height: calc(100% - 80px);
+            }
+        }
 
         /* 开场动画 */
         #intro-screen {
@@ -1138,15 +1146,59 @@
         }
 
         async function fetchIPData() {
+            const ipLabel = document.getElementById('ip-location');
+            const resolveIPv4 = async () => {
+                const endpoints = [
+                    async () => {
+                        const res = await fetch('https://api4.ipify.org?format=json');
+                        if (!res.ok) throw new Error('ipify v4 failed');
+                        const payload = await res.json();
+                        return payload?.ip;
+                    },
+                    async () => {
+                        const res = await fetch('https://ipv4.icanhazip.com');
+                        if (!res.ok) throw new Error('icanhazip failed');
+                        return (await res.text()).trim();
+                    },
+                ];
+
+                for (const resolver of endpoints) {
+                    try { const ipv4 = await resolver(); if (ipv4) return ipv4; } catch (err) { /* ignore and try next */ }
+                }
+                return null;
+            };
+
             try {
-                // Using a fallback mechanism if ipapi is rate limited
+                const ipv4 = await resolveIPv4();
+                if (!ipv4) throw new Error('no ipv4');
+
+                let countryName = '';
+                try {
+                    const locRes = await fetch(`https://ipapi.co/${ipv4}/json/`);
+                    if (locRes.ok) {
+                        const loc = await locRes.json();
+                        countryName = loc.country_name || loc.country || '';
+                        if (loc.timezone) userTimezone = loc.timezone;
+                    }
+                } catch (locErr) {
+                    console.warn('Location lookup failed', locErr);
+                }
+
+                ipLabel.innerText = countryName ? `${ipv4} (${countryName})` : ipv4;
+                return;
+            } catch (primaryErr) {
+                console.warn('IPv4 lookup failed, falling back', primaryErr);
+            }
+
+            try {
                 const res = await fetch('https://ipapi.co/json/');
                 if (!res.ok) throw new Error("API Limit");
                 const d = await res.json();
-                document.getElementById('ip-location').innerText = `${d.ip} (${d.country_name})`;
+                const bestIP = (d.ip && d.ip.includes(':') && d.ipv4) ? d.ipv4 : d.ip;
+                ipLabel.innerText = bestIP ? `${bestIP} (${d.country_name || ''})` : 'UNKNOWN';
                 if (d.timezone) userTimezone = d.timezone;
-            } catch (e) { 
-                document.getElementById('ip-location').innerText = "OFFLINE / BLOCKED"; 
+            } catch (e) {
+                ipLabel.innerText = "OFFLINE / BLOCKED";
             }
         }
 
@@ -1224,6 +1276,23 @@
             }
             setInterval(draw, 35);
         }
+
+        // 禁用右键菜单、保存、查看源码及常见的开发者快捷键
+        window.addEventListener('contextmenu', (e) => e.preventDefault(), { capture: true });
+        window.addEventListener('keydown', (e) => {
+            const key = (e.key || '').toLowerCase();
+            const blockCombos = (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['i', 'c', 'j', 'p'].includes(key)) ||
+                (e.metaKey && e.altKey && key === 'i')
+            );
+            const blockSaves = (e.ctrlKey || e.metaKey) && ['s', 'u', 'p'].includes(key);
+            if (blockCombos || blockSaves) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }, { capture: true });
 
         function triggerLoveImpact() {
             const input = document.getElementById('love-input');
