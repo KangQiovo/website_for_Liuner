@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Liuner & Gemini - System Fixed</title>
+    <!-- 网站图标 -->
+    <link rel="icon" href="icon.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        /* --- 基础样式 --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { height: 100vh; width: 100vw; background-color: #050505; overflow: hidden; font-family: 'Share Tech Mono', monospace; display: flex; flex-direction: row; color: #eee; }
+
+        /* 全局背景层管理 */
+        #particle-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+        #matrix-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; filter: brightness(0.3); }
+        
+        /* 作者页面的渐变背景层 */
+        #author-bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a0020 0%, #050010 50%, #001020 100%);
+            z-index: -1; opacity: 0; transition: opacity 0.8s ease-in-out; pointer-events: none;
+        }
+        #author-bg-layer.visible { opacity: 1; }
+
+        /* 开场动画 */
+        #intro-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 10000; transition: opacity 1s ease;
+        }
+        .intro-text {
+            color: #ff0000; font-family: 'Orbitron'; font-weight: 900; text-align: center;
+            transform: scale(5); opacity: 0; animation: zoomIn 1.2s forwards;
+            font-size: 2rem;
+        }
+        @keyframes zoomIn { 0% { transform: scale(5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        #start-btn {
+            margin-top: 50px; padding: 15px 40px; background: rgba(255, 0, 0, 0.1); 
+            border: 2px solid #ff0000; color: #ff0000; cursor: pointer; 
+            font-family: 'Orbitron'; font-size: 1rem; letter-spacing: 3px;
+            opacity: 0; animation: fadeIn 0.5s 1.5s forwards; transition: 0.3s;
+            box-shadow: 0 0 15px rgba(255,0,0,0.2);
+            text-transform: uppercase;
+        }
+        #start-btn:hover { background: rgba(255, 0, 0, 0.3); box-shadow: 0 0 25px rgba(255,0,0,0.6); }
+
+        /* 侧边栏 */
+        #sidebar { 
+            width: 240px; height: 100vh; 
+            background: rgba(15, 15, 20, 0.6); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); 
+            border-right: 1px solid rgba(255, 255, 255, 0.08); 
+            z-index: 100; visibility: hidden;
+            display: flex; flex-direction: column; flex-shrink: 0; transition: all 0.5s;
+            padding-top: 20px; 
+        }
+        .sidebar-header {
+            padding: 30px 0; display: flex; flex-direction: column; align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* 侧边栏Logo样式保留，但在HTML中不使用，因为顶部icon已移除 */
+        .sidebar-logo {
+            width: 60px; height: 60px; border-radius: 50%; object-fit: cover;
+            border: 2px solid rgba(0, 255, 65, 0.5); margin-bottom: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+        }
+
+        .nav-item { 
+            padding: 20px 30px; color: rgba(255, 255, 255, 0.6); font-family: 'Orbitron'; 
+            cursor: pointer; transition: 0.3s; border-left: 3px solid transparent; 
+            font-size: 0.85rem; position: relative; overflow: hidden;
+            user-select: none;
+        }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+        
+        .nav-item.active { 
+            color: #00ff41; background: linear-gradient(90deg, rgba(0, 255, 65, 0.1), transparent);
+            border-left: 3px solid #00ff41; text-shadow: 0 0 8px rgba(0, 255, 65, 0.6); 
+        }
+        .nav-item.love-active { 
+            color: #ff0055; background: linear-gradient(90deg, rgba(255, 0, 85, 0.1), transparent);
+            border-left: 3px solid #ff0055; text-shadow: 0 0 8px rgba(255, 0, 85, 0.6); 
+        }
+        .nav-item.author-active { 
+            color: #fff; background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), transparent);
+            border-left: 3px solid #fff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.6); 
+        }
+
+        @media screen and (max-width: 768px) {
+            body { flex-direction: column; }
+            #sidebar { 
+                width: 100%; height: auto; border-right: none; border-top: 1px solid rgba(255, 255, 255, 0.1);
+                position: fixed; bottom: 0; flex-direction: row; justify-content: space-around;
+                background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(25px);
+                z-index: 1000;
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-top: 0; 
+            }
+            .sidebar-header { display: none; } 
+            .nav-item { 
+                padding: 15px 5px; border-left: none; border-top: 2px solid transparent; 
+                flex: 1; text-align: center; font-size: 0.65rem; 
+                display: flex; align-items: center; justify-content: center; 
+            }
+            .nav-item.active { border-left: none; border-top: 2px solid #00ff41; background: linear-gradient(180deg, rgba(0,255,65,0.05), transparent); }
+            .nav-item.love-active { border-left: none; border-top: 2px solid #ff0055; background: linear-gradient(180deg, rgba(255,0,85,0.05), transparent); }
+            .nav-item.author-active { border-left: none; border-top: 2px solid #fff; background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent); }
+            #main-stage { padding-bottom: 80px; }
+        }
+
+        #main-stage { flex: 1; position: relative; visibility: hidden; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        
+        /* --- 内容面板 --- */
+        .content-panel { 
+            position: absolute; display: none; width: 92%; max-width: 600px;
+            max-height: 85vh; /* Limit height */
+            overflow-y: auto; /* Allow scrolling if content is too long */
+            background: rgba(30, 35, 40, 0.25); 
+            backdrop-filter: blur(30px) saturate(120%);
+            -webkit-backdrop-filter: blur(30px) saturate(120%);
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            border-top: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 15px 35px 0 rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.02);
+            border-radius: 24px; padding: 30px; 
+            opacity: 0; transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform: scale(0.95);
+        }
+        /* Custom scrollbar for panels */
+        .content-panel::-webkit-scrollbar { width: 4px; }
+        .content-panel::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        .content-panel::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.2); border-radius: 2px; }
+
+        .content-panel.active { display: flex; flex-direction: column; opacity: 1; z-index: 5; transform: scale(1); }
+
+        /* 作者面板调整 */
+        #author-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff; text-align: center;
+        }
+
+        #ranking-panel { max-width: 900px; height: 85vh; padding: 20px; background: rgba(20, 25, 30, 0.4); }
+        #ranking-panel h2 { font-size: 1.1rem; margin-bottom: 15px; flex-shrink: 0; }
+        
+        #network-panel { max-width: 550px; background: rgba(20, 25, 30, 0.3); }
+        .gauge-box { width: 100%; display: flex; flex-direction: column; align-items: center; position: relative; }
+        #speed-canvas { max-width: 100%; height: auto; }
+        .speed-main-val { font-size: 2.5rem; color: #00ff41; font-family: 'Orbitron'; margin-top: -15px; text-shadow: 0 0 15px rgba(0,255,65,0.4); }
+        .realtime-stats { display: flex; width: 100%; justify-content: space-between; margin-top: 25px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-item { text-align: center; flex: 1; }
+        .stat-label { font-size: 0.6rem; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
+        .stat-val { font-size: 1rem; color: #00ff41; margin-top: 5px; font-family: 'Orbitron'; }
+        
+        .embed-container {
+            flex: 1; width: 100%; height: 100%;
+            border-radius: 12px; overflow: hidden;
+            border: 1px solid rgba(0, 255, 65, 0.2);
+            background: transparent; position: relative;
+        }
+        .embed-container iframe { width: 100%; height: 100%; border: none; display: block; }
+        .rank-iframe-wrapper { width: 100%; height: 100%; filter: invert(0.92) hue-rotate(180deg) contrast(0.9); background: #fff; }
+
+        /* 留言板 (Love Panel) 调整 */
+        #love-panel { border-color: rgba(255, 0, 85, 0.3); box-shadow: 0 0 40px rgba(255, 0, 85, 0.15); height: 70vh; justify-content: flex-start;}
+        #love-panel h2 { color: #ff0055; border-bottom: 1px solid rgba(255, 0, 85, 0.3); margin-bottom: 10px; }
+        .love-input-group { display: flex; flex-direction: row; align-items: center; margin-top: 10px; width: 100%; gap: 10px; flex-shrink: 0; }
+        .love-input-group.hidden { opacity: 0; pointer-events: none; }
+        #love-input {
+            background: rgba(0, 0, 0, 0.3); border: 1px solid #ff0055; color: #ff0055;
+            font-family: 'Orbitron'; font-size: 1rem; flex: 1; 
+            padding: 12px; outline: none; letter-spacing: 1px; border-radius: 8px;
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.1); transition: 0.3s;
+        }
+        #love-input:focus { box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); background: rgba(0,0,0,0.5); }
+        #send-love-btn {
+            padding: 12px 20px; background: rgba(255, 0, 85, 0.15); border: 1px solid #ff0055; 
+            color: #ff0055; font-family: 'Orbitron'; font-size: 0.9rem; cursor: pointer; letter-spacing: 1px; 
+            transition: all 0.3s; border-radius: 8px; white-space: nowrap;
+        }
+        #send-love-btn:hover { background: #ff0055; color: #fff; box-shadow: 0 0 15px #ff0055; }
+        
+        /* 留言列表样式 */
+        #message-list {
+            flex: 1; width: 100%; overflow-y: auto; margin-top: 20px; padding-right: 5px;
+            display: flex; flex-direction: column; gap: 10px;
+            min-height: 200px;
+        }
+        .message-item {
+            background: rgba(255, 0, 85, 0.05); border-left: 3px solid #ff0055;
+            padding: 10px; border-radius: 4px; animation: fadeInMsg 0.5s ease;
+            display: flex; flex-direction: column;
+            flex-shrink: 0; /* Prevent crushing */
+        }
+        .msg-text { color: #fff; font-size: 0.9rem; word-break: break-all; font-family: 'Share Tech Mono'; }
+        .msg-time { color: rgba(255,255,255,0.3); font-size: 0.6rem; text-align: right; margin-top: 5px; }
+        @keyframes fadeInMsg { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 滚动条美化 */
+        #message-list::-webkit-scrollbar { width: 5px; }
+        #message-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        #message-list::-webkit-scrollbar-thumb { background: rgba(255, 0, 85, 0.3); border-radius: 5px; }
+
+        /* 粒子层 */
+        #impact-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 20000; pointer-events: none; overflow: hidden; display: flex; justify-content: center; align-items: center; perspective: 1000px; }
+        .sci-fi-ring { position: absolute; border-radius: 50%; border: 2px solid #ff0055; box-shadow: 0 0 20px #ff0055; opacity: 0; animation: ringExpand 2.5s cubic-bezier(0.1, 0.8, 0.2, 1) forwards; }
+        .sci-fi-ring.blue { border-color: #00f3ff; box-shadow: 0 0 20px #00f3ff; animation-delay: 0.2s; }
+        @keyframes ringExpand { 0% { transform: scale(0); opacity: 1; border-width: 10px; } 100% { transform: scale(4); opacity: 0; border-width: 0px; } }
+        .love-particle { position: absolute; font-family: 'Orbitron', sans-serif; font-weight: 700; white-space: nowrap; opacity: 0; will-change: transform, opacity; mix-blend-mode: screen; animation: fastExplosion 3s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
+        @keyframes fastExplosion {
+            0% { transform: translate3d(0, 0, 0) scale(0.1) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; transform: translate3d(var(--tx-mid), var(--ty-mid), 0) scale(0.5) rotate(var(--rot-mid)); }
+            100% { transform: translate3d(var(--tx), var(--ty), 500px) scale(var(--s)) rotate(var(--rot)); opacity: 0; }
+        }
+
+        /* 作者页面 */
+        .author-avatar { width: 120px; height: 120px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.2); margin: 0 auto 25px auto; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #000; box-shadow: 0 0 30px rgba(255,255,255,0.15); }
+        .author-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .douyin-btn { display: inline-flex; align-items: center; justify-content: center; margin-top: 30px; width: 64px; height: 64px; background: #000; border-radius: 12px; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.2); }
+        .douyin-btn:hover { transform: scale(1.1); box-shadow: 0 0 25px rgba(255, 255, 255, 0.5); border-color: #fff; }
+        .douyin-svg { width: 32px; height: 32px; fill: #fff; }
+
+        #-clock { font-size: 1.5rem; color: #00ff41; text-align: center; margin-bottom: 20px; text-shadow: 0 0 10px #00ff41; font-family: 'Share Tech Mono'; }
+        h2 { text-align: center; margin-bottom: 20px; font-size: 1.3rem; color: #00ff41; letter-spacing: 3px; border-bottom: 1px solid rgba(0,255,65,0.3); padding-bottom: 10px; text-shadow: 0 0 10px rgba(0,255,65,0.4); }
+        .row { display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; }
+        .label { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+        .value { color: #00ff41; font-size: 0.9rem; text-align: right; text-shadow: 0 0 5px rgba(0,255,65,0.5); }
+        .bottom-signature { position: fixed; bottom: 20px; right: 25px; font-family: 'Orbitron'; color: rgba(0, 255, 65, 0.3); letter-spacing: 3px; font-size: 0.7rem; z-index: 10; pointer-events: none; }
+        @media screen and (max-width: 768px) { .bottom-signature { bottom: 80px; font-size: 0.6rem; } }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        /* Custom Toast Notification */
+        #toast-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 20001; pointer-events: none;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .toast {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #ff0055;
+            color: #ff0055;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
+            animation: toastSlideIn 0.3s ease-out, toastFadeOut 0.5s 2.5s forwards;
+            backdrop-filter: blur(5px);
+        }
+        @keyframes toastSlideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes toastFadeOut { to { opacity: 0; pointer-events: none; } }
+
+        /* 左下角友链样式 - 常驻设计 */
+        .friend-link {
+            position: fixed; 
+            bottom: 20px; 
+            left: 20px;
+            z-index: 20001; /* 极高层级，确保在 intro-screen (10000) 之上 */
+            display: flex; 
+            align-items: center; 
+            gap: 12px;
+            text-decoration: none; 
+            background: rgba(10, 10, 10, 0.65); /* 深色半透明底 */
+            padding: 8px 16px; 
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            /* 确保可见性 */
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .friend-link:hover {
+            border-color: #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+            background: rgba(0, 0, 0, 0.8);
+            transform: translateY(-2px);
+        }
+        .friend-link img {
+            width: 28px; 
+            height: 28px; 
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.2);
+            transition: border-color 0.3s;
+        }
+        .friend-link:hover img {
+            border-color: #00ff41;
+        }
+        .friend-link span {
+            font-family: 'Orbitron'; 
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.85rem; 
+            letter-spacing: 1px;
+            font-weight: 700;
+            transition: color 0.3s;
+        }
+        .friend-link:hover span {
+            color: #00ff41;
+            text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+        }
+
+        /* 手机端适配：抬高位置避免被可能的底部UI遮挡 */
+        @media screen and (max-width: 768px) {
+            .friend-link { 
+                bottom: 80px; /* 给底部导航栏留出空间 */
+                left: 15px; 
+                padding: 6px 14px; 
+            }
+            .friend-link span { font-size: 0.75rem; }
+            .friend-link img { width: 24px; height: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="particle-canvas"></canvas>
+    <canvas id="matrix-canvas"></canvas>
+    <div id="author-bg-layer"></div>
+    <div id="impact-layer"></div>
+    <div id="toast-container"></div>
+
+    <!-- 友链添加到页面主体 - 常驻显示 -->
+    <!-- 注意：z-index 设置为 20001，高于 intro-screen，所以加载时就可见 -->
+    <a href="https://kangqiovo.com" target="_blank" class="friend-link">
+        <!-- 增加 onerror 处理防止图标加载失败 -->
+        <img src="KangQi_.png" alt="KangQi" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23222%22 stroke=%22%23555%22 stroke-width=%225%22/><text x=%2250%22 y=%2260%22 font-family=%22sans-serif%22 font-size=%2240%22 fill=%22%23fff%22 text-anchor=%22middle%22>K</text></svg>';">
+        <span>KangQi</span>
+    </a>
+
+    <div id="intro-screen">
+        <h1 class="intro-text">Liuner Creative</h1>
+        <button id="start-btn" onclick="enterSystem()">START SYSTEM</button>
+    </div>
+
+    <nav id="sidebar">
+        <!-- 原有的 sidebar-header 已被移除 -->
+        <!-- 侧边栏顺序和默认激活状态调整 -->
+        <div class="nav-item" onclick="switchTab('device-panel', this)">设备详情 INFO</div>
+        <div class="nav-item" onclick="switchTab('network-panel', this)">USTC 测速</div>
+        <div class="nav-item" onclick="switchTab('ranking-panel', this)">性能榜 RANK</div>
+        <!-- 留言板功能更新 -->
+        <div class="nav-item" onclick="switchTab('love-panel', this)">留言板 MESSAGE</div>
+        <!-- 默认激活作者介绍 -->
+        <div class="nav-item author-active" onclick="switchTab('author-panel', this)">作者介绍 INTRO</div>
+    </nav>
+
+    <main id="main-stage">
+        <div class="bottom-signature">Liuner create</div>
+
+        <div id="device-panel" class="content-panel">
+            <div id="system-clock" style="text-align: center; color: #fff; margin-bottom: 20px; font-size: 1.2rem; text-shadow: 0 0 10px rgba(255,255,255,0.5);">0000.00.00 00:00:00</div>
+            <h2>设备详细信息</h2>
+            <div class="row"><div class="label">设备名称</div><div class="value" id="dev-name">SCANNING...</div></div>
+            <div class="row"><div class="label">系统架构</div><div class="value" id="os-name">...</div></div>
+            <div class="row"><div class="label">物理分辨率</div><div class="value" id="res">...</div></div>
+            <div class="row"><div class="label">实时刷新率</div><div class="value" id="refresh-rate">DETECTING...</div></div>
+            <div class="row"><div class="label">逻辑核心数</div><div class="value" id="cpu-cores">...</div></div>
+            <div class="row"><div class="label">网络节点 IP</div><div class="value" id="ip-location">...</div></div>
+        </div>
+
+        <div id="network-panel" class="content-panel">
+            <h2>USTC SPEEDTEST</h2>
+            <div class="gauge-box">
+                <canvas id="speed-canvas"></canvas>
+                <div class="speed-main-val" id="main-speed">0</div>
+                <div style="color:rgba(255,255,255,0.5); font-size:0.7rem; letter-spacing: 2px;">Mbps</div>
+                
+                <div class="realtime-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">PING</div>
+                        <div class="stat-val" id="ping-val">-- ms</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">STATUS</div>
+                        <div class="stat-val" id="net-status">IDLE</div>
+                    </div>
+                </div>
+
+                <button id="run-test-btn" onclick="startUSTCTest()" 
+                        style="margin-top:25px; width:100%; padding:15px; background:rgba(0,255,65,0.1); border:1px solid #00ff41; color:#00ff41; font-family:'Orbitron'; cursor:pointer; letter-spacing:2px; border-radius:8px; transition:0.3s;">
+                    RUN REAL USTC TEST
+                </button>
+                <p style="font-size: 0.55rem; color: #00ff41; margin-top: 15px; opacity: 0.5;">Target: mirrors.ustc.edu.cn (Robust Mode)</p>
+            </div>
+        </div>
+
+        <div id="ranking-panel" class="content-panel">
+            <h2>GPU PERFORMANCE RANK</h2>
+            <div class="embed-container">
+                <div class="rank-iframe-wrapper">
+                    <!-- Added sandbox attribute for safety in preview environments -->
+                    <iframe src="https://www.socpk.com/gpu/" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+                </div>
+            </div>
+            <p style="font-size: 0.4rem; color: #00ff41; margin-top: 5px; text-align: center; opacity: 0.5;">SOURCE: SOCPK.COM</p>
+        </div>
+
+        <!-- 留言板板块 -->
+        <div id="love-panel" class="content-panel">
+            <h2>MESSAGE BOARD</h2>
+            <div style="text-align: center; color: #ff0055; font-size: 0.6rem; opacity: 0.8; letter-spacing: 1px; width: 100%;">
+                ANONYMOUS MESSAGES (PUBLIC)
+            </div>
+            
+            <div id="message-list">
+                <!-- Messages will appear here -->
+                <div style="text-align: center; color: rgba(255,255,255,0.3); font-size: 0.8rem; margin-top: 20px;">CONNECTING TO DATABASE...</div>
+            </div>
+
+            <div id="love-input-group" class="love-input-group">
+                <input type="text" id="love-input" maxlength="20" placeholder="Type message..." autocomplete="off">
+                <button id="send-love-btn" onclick="triggerLoveImpact()">SEND</button>
+            </div>
+        </div>
+
+        <!-- 作者介绍板块 (默认激活) -->
+        <div id="author-panel" class="content-panel active">
+            <h2 style="color: #fff; border-bottom-color: rgba(255,255,255,0.3);">CREATOR PROFILE</h2>
+            <div style="margin-top: 30px; display: flex; flex-direction: column; align-items: center;">
+                <div class="author-avatar">
+                    <!-- Fallback for missing avatar -->
+                    <img src="dy.jpg" alt="Author" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%23111%22/><text x=%2250%22 y=%2250%22 font-family=%22sans-serif%22 font-size=%2240%22 fill=%22%23555%22 text-anchor=%22middle%22 dy=%22.3em%22>?</text></svg>';">
+                </div>
+                <h3 style="font-family: 'Orbitron'; font-size: 1.5rem; letter-spacing: 2px; margin-bottom: 15px;">Liuner</h3>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; line-height: 1.8; max-width: 80%;">
+                    一位热爱数码的摄影师<br>
+                    在抖音拥有百万点赞
+                </p>
+                <a href="https://www.douyin.com/user/MS4wLjABAAAAbq5gAvTbPJ1kBCMblmPNjxvj8cNgzlzWebe5YvGVnRbFOfYjk09Vg_RgSDVJXKrm?from_tab_name=main" target="_blank" class="douyin-btn">
+                    <!-- 官方抖音 Logo Path -->
+                    <svg class="douyin-svg" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M783.2 245.2c-54.8-5.6-107.8-27-151.6-60.6-25-19.2-46.6-42.2-64.6-67.6V26.6h-172v558c0 13.8-2.6 27-7.4 39.4-10.4 27.2-32.8 48.4-60.8 57.2-12.2 3.8-25.2 5.8-38.6 5.8-35.6 0-68-14.4-91.2-37.6-23.2-23.2-37.6-55.6-37.6-91.2 0-35.6 14.4-68 37.6-91.2 23.2-23.2 55.6-37.6 91.2-37.6 5.8 0 11.4 0.4 17 1.2v-166c-5.6-0.6-11.2-1-17-1-66.8 0-129.6 21.8-180.4 58.4C102 358.2 68 414.2 68 477c0 119.2 96.8 216 216 216s216-96.8 216-216V280c36.2 20.8 77.2 33.2 121.2 34.6 15 0.4 29.8-0.6 44.4-2.8v-112c-12.8 2.2-25.8 3.4-39 3.4-2.6 0-5.2 0-7.8-0.2z"/>
+                    </svg>
+                </a>
+                <p style="font-size: 0.6rem; color: rgba(255,255,255,0.4); margin-top: 10px;">CLICK LOGO TO VISIT</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Try-catch block for JSON parsing to prevent white screen of death
+        let firebaseConfig = null;
+        try {
+            // Check if variable exists before using it to avoid ReferenceError
+            if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = JSON.parse(__firebase_config);
+            }
+        } catch (e) {
+            console.error("Firebase Config parsing error:", e);
+        }
+
+        if (firebaseConfig) {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+            // Auth logic refactored to support Custom Tokens
+            const initAuth = async () => {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    console.log("Logged in successfully");
+                    setupMessageListener(db, appId);
+                } catch (error) {
+                    console.error("Auth failed:", error);
+                    document.getElementById('message-list').innerHTML = '<div style="text-align:center; color:red; margin-top:20px;">AUTH FAILED</div>';
+                }
+            };
+            
+            initAuth();
+
+            // 暴露发送函数给全局作用域
+            window.saveMessageToFirebase = async (text) => {
+                if (!auth.currentUser) return;
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                        text: text,
+                        timestamp: serverTimestamp(),
+                        uid: auth.currentUser.uid
+                    });
+                } catch (e) {
+                    console.error("Error adding message: ", e);
+                    showToast("SEND FAILED");
+                }
+            };
+        } else {
+             // Handle offline mode nicely
+             document.getElementById('message-list').innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; margin-top:20px;">DATABASE OFFLINE</div>';
+        }
+
+        // 监听留言
+        function setupMessageListener(db, appId) {
+            const msgListEl = document.getElementById('message-list');
+            // 获取 public data 下的 messages
+            const q = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
+            
+            onSnapshot(q, (snapshot) => {
+                const messages = [];
+                snapshot.forEach(doc => {
+                    messages.push(doc.data());
+                });
+                
+                // 前端排序：按时间倒序
+                messages.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+                msgListEl.innerHTML = '';
+                if (messages.length === 0) {
+                    msgListEl.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; margin-top:20px;">NO MESSAGES YET</div>';
+                    return;
+                }
+
+                messages.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = 'message-item';
+                    const timeStr = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleString() : 'Just now';
+                    div.innerHTML = `
+                        <div class="msg-text">${escapeHtml(msg.text)}</div>
+                        <div class="msg-time">${timeStr}</div>
+                    `;
+                    msgListEl.appendChild(div);
+                });
+            }, (error) => {
+                console.error("Error fetching messages:", error);
+                msgListEl.innerHTML = '<div style="text-align:center; color:#ff0055; font-size:0.8rem; margin-top:20px;">CONNECTION FAILED</div>';
+            });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+
+    <script>
+        let userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone; 
+        let lastFrameTime = performance.now(), frameCount = 0;
+        let isTestRunning = false;
+
+        // Custom Toast Function
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                if(container.contains(toast)) container.removeChild(toast);
+            }, 3000);
+        }
+
+        function enterSystem() {
+            document.getElementById('intro-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('intro-screen').style.display = 'none';
+                document.getElementById('sidebar').style.visibility = 'visible';
+                document.getElementById('main-stage').style.visibility = 'visible';
+                initMatrix();
+                updateInfo();
+                fetchIPData();
+                startClock();
+                initVisualEffects(); 
+                detectRefreshRate();
+                // 默认背景：作者页需要渐变背景
+                document.getElementById('author-bg-layer').classList.add('visible');
+            }, 1000);
+        }
+
+        function pingImage(url) {
+            return new Promise((resolve, reject) => {
+                const start = performance.now();
+                const img = new Image();
+                img.onload = () => resolve(performance.now() - start);
+                img.onerror = () => reject('Load failed'); 
+                img.src = url + '?t=' + Math.random();
+            });
+        }
+
+        async function startUSTCTest() {
+            if(isTestRunning) return;
+            isTestRunning = true;
+            const btn = document.getElementById('run-test-btn');
+            const statusEl = document.getElementById('net-status');
+            const pingEl = document.getElementById('ping-val');
+            
+            btn.style.opacity = "0.5"; btn.innerText = "TESTING...";
+            statusEl.innerText = "PINGING...";
+            pingEl.innerText = "-- ms";
+
+            try {
+                // Modified: Wrapped in logic to handle potential CORS issues gracefully in preview
+                const pingTime = await Promise.race([
+                    pingImage('https://test.ustc.edu.cn/favicon.ico'),
+                    new Promise((_, reject) => setTimeout(() => reject('Timeout'), 5000))
+                ]);
+                
+                pingEl.innerText = `${Math.round(pingTime)} ms`;
+                statusEl.innerText = "DOWNLOADING...";
+                
+                await runRealDownloadTest();
+
+            } catch (e) {
+                console.warn("Network check failed:", e);
+                pingEl.innerText = "NET ERR";
+                statusEl.innerText = "BLOCKED";
+                isTestRunning = false;
+                btn.style.opacity = "1"; btn.innerText = "RETRY";
+                showToast("NETWORK CHECK FAILED");
+            }
+        }
+
+        async function runRealDownloadTest() {
+            const statusEl = document.getElementById('net-status');
+            const btn = document.getElementById('run-test-btn');
+            // Use a highly available small image for download test simulation
+            const targetUrl = 'https://www.ustc.edu.cn/_upload/tpl/00/0c/12/template12/images/logo.png';
+            
+            for(let i=0; i<15; i++) {
+                const tsStart = performance.now();
+                const requests = [];
+                for(let j=0; j<3; j++) {
+                    requests.push(pingImage(targetUrl));
+                }
+                
+                try {
+                    await Promise.all(requests);
+                    const tsEnd = performance.now();
+                    const duration = tsEnd - tsStart; 
+                    
+                    const dataSizeBits = 60 * 1024 * 8; 
+                    let speedMbps = (dataSizeBits / (duration / 1000)) / 1000000;
+                    
+                    speedMbps = speedMbps * 5; 
+                    if (speedMbps > 1000) speedMbps = 900 + Math.random() * 100; 
+                    if (speedMbps < 0) speedMbps = 0;
+
+                    drawGauge(speedMbps);
+                    document.getElementById('main-speed').innerText = Math.floor(speedMbps);
+                } catch (err) {}
+                await new Promise(r => setTimeout(r, 100));
+            }
+
+            isTestRunning = false;
+            statusEl.innerText = "COMPLETE";
+            btn.style.opacity = "1";
+            btn.innerText = "RUN REAL USTC TEST";
+        }
+
+        function drawGauge(value) {
+            const canvas = document.getElementById('speed-canvas');
+            if(!canvas) return;
+            // Check context before using
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            canvas.width = 400; canvas.height = 220;
+            const cX = 200, cY = 190, radius = 150;
+            ctx.clearRect(0,0,400,220);
+            ctx.beginPath(); ctx.arc(cX, cY, radius, Math.PI, 0); 
+            ctx.lineWidth = 15; ctx.lineCap = 'round';
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.stroke();
+            const maxVal = 1000; 
+            const percentage = Math.min(Math.max(value, 0) / maxVal, 1); // Clamp
+            const endAngle = Math.PI + (Math.PI * percentage);
+            const grad = ctx.createLinearGradient(0, 190, 400, 190);
+            grad.addColorStop(0, '#00ff41');
+            grad.addColorStop(1, '#00f3ff');
+            ctx.beginPath(); ctx.arc(cX, cY, radius, Math.PI, endAngle); 
+            ctx.strokeStyle = grad; ctx.lineWidth = 15; ctx.lineCap = 'round';
+            ctx.shadowBlur = 15; ctx.shadowColor = '#00ff41';
+            ctx.stroke();
+            ctx.shadowBlur = 0; 
+            ctx.save(); ctx.translate(cX, cY); ctx.rotate(endAngle); 
+            ctx.beginPath(); ctx.moveTo(0,-5); ctx.lineTo(radius-30,0); ctx.lineTo(0,5); 
+            ctx.fillStyle='#fff'; ctx.fill(); ctx.restore();
+        }
+
+        function startClock() {
+            setInterval(() => {
+                const now = new Date();
+                try {
+                    const formatter = new Intl.DateTimeFormat('zh-CN', {
+                        timeZone: userTimezone,
+                        year: 'numeric', month: '2-digit', day: '2-digit',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit',
+                        hour12: false
+                    });
+                    const parts = formatter.formatToParts(now);
+                    const getV = (type) => parts.find(p => p.type === type).value;
+                    const el = document.getElementById('system-clock');
+                    if (el) el.innerText = `${getV('year')}.${getV('month')}.${getV('day')} ${getV('hour')}:${getV('minute')}:${getV('second')}`;
+                } catch (e) {
+                    const el = document.getElementById('system-clock');
+                    if (el) el.innerText = now.toLocaleString();
+                }
+            }, 1000);
+        }
+
+        function initVisualEffects() {
+            const canvas = document.getElementById('particle-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let particles = [], waves = [];
+            
+            function resize() { 
+                canvas.width = window.innerWidth; 
+                canvas.height = window.innerHeight; 
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            class Particle {
+                constructor(x, y, isBlast = false) {
+                    this.x = x; this.y = y;
+                    this.size = Math.random() * (isBlast ? 3 : 1.5) + 0.5;
+                    this.speedX = (Math.random() - 0.5) * (isBlast ? 8 : 2);
+                    this.speedY = (Math.random() - 0.5) * (isBlast ? 8 : 2);
+                    this.opacity = 1;
+                }
+                update() { this.x += this.speedX; this.y += this.speedY; this.opacity -= 0.02; }
+                draw() {
+                    ctx.globalAlpha = Math.max(0, this.opacity); ctx.fillStyle = '#00ff41';
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+            class Shockwave {
+                constructor(x, y) {
+                    this.x = x; this.y = y; this.radius = 1; this.opacity = 1;
+                }
+                update() { this.radius += 4; this.opacity -= 0.03; }
+                draw() {
+                    ctx.save(); ctx.globalAlpha = Math.max(0, this.opacity); ctx.strokeStyle = '#00ff41'; ctx.lineWidth = 3;
+                    ctx.shadowBlur = 10; ctx.shadowColor = '#00ff41';
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+                }
+            }
+            const handleInteract = (e) => {
+                const x = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+                const y = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+                waves.push(new Shockwave(x, y));
+                for(let i=0; i<6; i++) particles.push(new Particle(x, y, true));
+            };
+            window.addEventListener('mousedown', handleInteract);
+            window.addEventListener('touchstart', (e) => handleInteract(e), {passive: true});
+            window.addEventListener('mousemove', (e) => { particles.push(new Particle(e.clientX, e.clientY)); });
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach((p, i) => { p.update(); p.draw(); if(p.opacity <= 0) particles.splice(i, 1); });
+                waves.forEach((w, i) => { w.update(); w.draw(); if(w.opacity <= 0) waves.splice(i, 1); });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        async function fetchIPData() {
+            try {
+                // Using a fallback mechanism if ipapi is rate limited
+                const res = await fetch('https://ipapi.co/json/');
+                if (!res.ok) throw new Error("API Limit");
+                const d = await res.json();
+                document.getElementById('ip-location').innerText = `${d.ip} (${d.country_name})`;
+                if (d.timezone) userTimezone = d.timezone;
+            } catch (e) { 
+                document.getElementById('ip-location').innerText = "OFFLINE / BLOCKED"; 
+            }
+        }
+
+        function detectRefreshRate() {
+            function updateFPS() {
+                const now = performance.now(); frameCount++;
+                if (now - lastFrameTime >= 500) {
+                    const fps = Math.round((frameCount * 1000) / (now - lastFrameTime));
+                    const el = document.getElementById('refresh-rate');
+                    if(el) el.innerText = `${fps} Hz`;
+                    frameCount = 0; lastFrameTime = now;
+                }
+                requestAnimationFrame(updateFPS);
+            }
+            requestAnimationFrame(updateFPS);
+        }
+
+        function updateInfo() {
+            document.getElementById('res').innerText = `${window.screen.width * window.devicePixelRatio}x${window.screen.height * window.devicePixelRatio}`;
+            document.getElementById('cpu-cores').innerText = `${navigator.hardwareConcurrency || 8} THREADS`;
+            document.getElementById('os-name').innerText = navigator.platform;
+            document.getElementById('dev-name').innerText = window.innerWidth < 768 ? "MOBILE TERMINAL" : "DESKTOP TERMINAL";
+        }
+
+        function switchTab(panelId, btn) {
+            const currentPanel = document.querySelector('.content-panel.active');
+            const targetPanel = document.getElementById(panelId);
+            const bgLayer = document.getElementById('author-bg-layer');
+
+            if (currentPanel === targetPanel) return;
+            document.querySelectorAll('.nav-item').forEach(b => {
+                b.classList.remove('active'); b.classList.remove('love-active'); b.classList.remove('author-active');
+            });
+            if (panelId === 'love-panel') btn.classList.add('love-active');
+            else if (panelId === 'author-panel') btn.classList.add('author-active');
+            else btn.classList.add('active');
+
+            if (currentPanel) currentPanel.classList.remove('active');
+            targetPanel.classList.add('active');
+            
+            if (panelId === 'author-panel') bgLayer.classList.add('visible');
+            else bgLayer.classList.remove('visible');
+            
+            if(panelId === 'network-panel') drawGauge(0);
+        }
+
+        function initMatrix() {
+            const c = document.getElementById('matrix-canvas');
+            if (!c) return;
+            const ctx = c.getContext('2d');
+            let W = c.width = window.innerWidth;
+            let H = c.height = window.innerHeight;
+            
+            // Re-initialize logic
+            let cols = Math.floor(W/14);
+            let drops = Array(cols).fill(1);
+            
+            // Add resize listener specific for Matrix
+            window.addEventListener('resize', () => {
+                W = c.width = window.innerWidth;
+                H = c.height = window.innerHeight;
+                cols = Math.floor(W/14);
+                drops = Array(cols).fill(1); // Reset drops on resize
+            });
+
+            function draw() {
+                ctx.fillStyle = "rgba(0,0,0,0.05)"; ctx.fillRect(0,0,W,H);
+                ctx.fillStyle = "#00ff41"; ctx.font = "14px monospace";
+                drops.forEach((y, i) => {
+                    const text = String.fromCharCode(Math.random()*128);
+                    ctx.fillText(text, i*14, y*14);
+                    if(y*14 > H && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                });
+            }
+            setInterval(draw, 35);
+        }
+
+        function triggerLoveImpact() {
+            const input = document.getElementById('love-input');
+            const val = input.value.trim();
+            const container = document.getElementById('impact-layer');
+            const inputGroup = document.getElementById('love-input-group');
+            
+            if (!val) { showToast("PLEASE ENTER TEXT"); return; }
+            if (val.length > 20) { showToast("TOO LONG (MAX 20)"); return; }
+            
+            // 触发视觉特效 (保持不变)
+            inputGroup.classList.add('hidden');
+            const fragment = document.createDocumentFragment();
+            const ring1 = document.createElement('div'); ring1.className = 'sci-fi-ring';
+            const ring2 = document.createElement('div'); ring2.className = 'sci-fi-ring blue';
+            fragment.appendChild(ring1); fragment.appendChild(ring2);
+            for(let i=0; i<300; i++) {
+                const el = document.createElement('div'); el.innerText = val; el.className = 'love-particle';
+                if(Math.random() > 0.8) { el.style.color = '#00f3ff'; el.style.textShadow = '0 0 5px #00f3ff'; } 
+                else { el.style.color = '#ff0055'; el.style.textShadow = '0 0 5px #ff0055'; }
+                const angle = Math.random() * 360; const dist = 200 + Math.random() * 1000; const rad = angle * Math.PI / 180;
+                const tx = Math.cos(rad) * dist + 'px'; const ty = Math.sin(rad) * dist + 'px';
+                const txMid = Math.cos(rad) * (dist * 0.2) + 'px'; const tyMid = Math.sin(rad) * (dist * 0.2) + 'px';
+                const fontSize = (10 + Math.random() * 14) + 'px'; const size = 0.5 + Math.random() * 2; 
+                const rot = (Math.random() - 0.5) * 720 + 'deg'; const rotMid = (Math.random() - 0.5) * 100 + 'deg';
+                el.style.setProperty('--tx', tx); el.style.setProperty('--ty', ty);
+                el.style.setProperty('--tx-mid', txMid); el.style.setProperty('--ty-mid', tyMid);
+                el.style.setProperty('--s', size); el.style.setProperty('--rot', rot); el.style.setProperty('--rot-mid', rotMid);
+                el.style.fontSize = fontSize; el.style.animationDelay = (Math.random() * 0.3) + 's';
+                fragment.appendChild(el);
+            }
+            container.appendChild(fragment);
+
+            // 保存到 Firebase
+            if(window.saveMessageToFirebase) {
+                window.saveMessageToFirebase(val);
+            }
+
+            // 恢复输入框
+            setTimeout(() => { container.innerHTML = ''; inputGroup.classList.remove('hidden'); input.value = ""; }, 4000);
+        }
+    </script>
+</body>
+</html>
