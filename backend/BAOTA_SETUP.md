@@ -2,9 +2,17 @@
 
 下述步骤假设你已经在服务器上通过宝塔面板安装了 Node 环境（Node 管理器）并能访问宝塔终端。
 
-## 1. 准备代码目录
-1. 在宝塔面板中创建一个目录（例如 `/www/wwwroot/message-api`）。
-2. 将本项目的 `backend` 目录全部上传/同步到该目录：目录中应该能看到 `server.js` 和（首次运行后自动生成的）`messages.json`。
+## 1. 准备代码目录（以 `/www/wwwroot/liuner.top` 为示例）
+1. 宝塔面板中网站根目录是 `/www/wwwroot/liuner.top`，建议在该目录下单独放一个后端文件夹，例如：`/www/wwwroot/liuner.top/backend`。
+2. 将本项目的 `backend` 目录全部上传/同步到这个新文件夹内，结构应类似：
+   ```
+   /www/wwwroot/liuner.top/
+   ├─ backend/
+   │  ├─ server.js        # 启动文件
+   │  └─ messages.json    # 首次运行后自动生成的持久化文件
+   └─ (前端站点文件……)
+   ```
+   > 提示：如需分离站点与接口，也可以将后端单独放在 `/www/wwwroot/message-api`，步骤完全相同，只需把下面提到的路径改成该目录即可。
 
 > 提示：此服务不依赖第三方 npm 包，保持目录干净即可。
 
@@ -14,8 +22,8 @@
 ## 3. 创建 PM2 项目
 1. 打开宝塔「Node 项目管理」→「添加项目」。
 2. 选择 **PM2** 类型。
-3. 「项目路径」填写步骤 1 的目录，例如 `/www/wwwroot/message-api`。
-4. 「启动文件」填写 `server.js`。
+3. 「项目路径」填写步骤 1 的目录，例如 `/www/wwwroot/liuner.top/backend`（或你自定义的接口目录）。
+4. 「启动文件」填写 `server.js`（保持与项目路径在同一层级）。
 5. 「运行目录」保持与项目路径一致。
 6. 「运行用户」保持默认（一般为 `www`）。
 7. 「启动参数」可为空，或自定义端口：`PORT=8787`（默认 8787，可自行调整）。
@@ -28,7 +36,7 @@ Message board backend running on http://localhost:8787/api/messages
 
 ## 4. 放行端口与反向代理
 - 若直接暴露接口：在宝塔安全/防火墙放行 `8787`（或你自定义的端口）。
-- 如需通过网站同域访问，推荐在对应站点添加反向代理：
+- 如需通过网站同域访问，推荐在 `liuner.top` 站点添加反向代理：
   - 目标：`http://127.0.0.1:8787`
   - 路径：`/api/messages`
   - 勾选「缓存」关闭，确保 POST 正常透传。
