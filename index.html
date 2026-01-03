@@ -396,8 +396,8 @@
 
         /* 左下角友链样式 - 常驻设计 */
         .friend-link {
-            position: fixed; 
-            bottom: 20px; 
+            position: fixed;
+            bottom: 20px;
             left: 20px;
             z-index: 20001; /* 极高层级，确保在 intro-screen (10000) 之上 */
             display: flex; 
@@ -415,6 +415,11 @@
             /* 确保可见性 */
             visibility: visible !important;
             opacity: 1 !important;
+        }
+        .friend-link.hidden {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
         }
         .friend-link:hover {
             border-color: #00ff41;
@@ -478,7 +483,7 @@
 
     <!-- 友链添加到页面主体 - 常驻显示 -->
     <!-- 注意：z-index 设置为 20001，高于 intro-screen，所以加载时就可见 -->
-    <a href="https://kangqiovo.com" target="_blank" class="friend-link">
+    <a href="https://kangqiovo.com" target="_blank" class="friend-link hidden">
         <!-- 增加 onerror 处理防止图标加载失败 -->
         <img src="KangQi_.png" alt="KangQi" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23222%22 stroke=%22%23555%22 stroke-width=%225%22/><text x=%2250%22 y=%2260%22 font-family=%22sans-serif%22 font-size=%2240%22 fill=%22%23fff%22 text-anchor=%22middle%22>K</text></svg>';">
         <span class="friend-label">友链</span>
@@ -920,6 +925,8 @@
                 if (intro) intro.style.display = 'none';
                 document.getElementById('sidebar').style.visibility = 'visible';
                 document.getElementById('main-stage').style.visibility = 'visible';
+                const friendLink = document.querySelector('.friend-link');
+                if (friendLink) friendLink.classList.remove('hidden');
                 initMatrix();
                 updateInfo();
                 fetchIPData();
