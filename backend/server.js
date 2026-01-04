@@ -56,13 +56,18 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (url.pathname === '/api/messages' && req.method === 'GET') {
+  if (url.pathname === '/api/health') {
+    sendJson(res, 200, { ok: true });
+    return;
+  }
+
+  if ((url.pathname === '/api/messages' || url.pathname === '/api/messages/') && req.method === 'GET') {
     const messages = loadMessages().sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
     sendJson(res, 200, messages);
     return;
   }
 
-  if (url.pathname === '/api/messages' && req.method === 'POST') {
+  if ((url.pathname === '/api/messages' || url.pathname === '/api/messages/') && req.method === 'POST') {
     let body = '';
     req.on('data', chunk => {
       body += chunk;

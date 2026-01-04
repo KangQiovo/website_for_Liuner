@@ -620,6 +620,8 @@
         let firebaseConfig = null;
         let backendPollTimer = null;
         const backendPollInterval = 10000;
+        let backendApiBase = null;
+        let backendResolving = false;
         window.sendMessageHandler = null;
         try {
             // Check if variable exists before using it to avoid ReferenceError
@@ -729,7 +731,16 @@
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 3000);
             try {
-                const res = await fetch(`${base.replace(/\/$/, '')}/messages?ping=${Date.now()}`, {
+                const normalized = base.replace(/\/$/, '');
+                const healthRes = await fetch(`${normalized}/health?ping=${Date.now()}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    mode: 'cors',
+                    signal: controller.signal
+                });
+                if (healthRes.ok) return true;
+
+                const res = await fetch(`${normalized}/messages?ping=${Date.now()}`, {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' },
                     mode: 'cors',
@@ -743,18 +754,36 @@
             }
         }
 
+        async function refreshBackendBase(msgListEl) {
+            if (backendResolving) return backendApiBase;
+            backendResolving = true;
+            try {
+                const detectedBase = await resolveApiBase();
+                const fallbackBase = (typeof __message_api_base !== 'undefined' && __message_api_base) || `${location.origin}/api`;
+                backendApiBase = (detectedBase || fallbackBase || '').replace(/\/$/, '');
+
+                if (!detectedBase && msgListEl) {
+                    msgListEl.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.6); font-size:0.8rem; margin-top:20px;">CONNECTING TO BACKEND...</div>';
+                }
+
+                return backendApiBase;
+            } finally {
+                backendResolving = false;
+            }
+        }
+
         async function initCustomBackendBridge() {
             const msgListEl = document.getElementById('message-list');
             const inputEl = document.getElementById('love-input');
             const btnEl = document.getElementById('send-love-btn');
-            const detectedBase = await resolveApiBase();
-            const apiBase = detectedBase || (typeof __message_api_base !== 'undefined' && __message_api_base) || `${location.origin}/api`;
-
-            if (!detectedBase && msgListEl) {
-                msgListEl.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.6); font-size:0.8rem; margin-top:20px;">CONNECTING TO BACKEND...</div>';
-            }
+            await refreshBackendBase(msgListEl);
 
             const loadMessages = async () => {
+                const apiBase = backendApiBase || await refreshBackendBase(msgListEl);
+                if (!apiBase) {
+                    setLoveBoardDisabled('BACKEND OFFLINE');
+                    return;
+                }
                 try {
                     const res = await fetch(`${apiBase}/messages`, { headers: { 'Accept': 'application/json' } });
                     if (!res.ok) throw new Error('Bad status');
@@ -763,6 +792,7 @@
                     renderMessages(msgListEl, messages);
                 } catch (err) {
                     console.error('Backend fetch failed', err);
+                    await refreshBackendBase(msgListEl);
                     if (msgListEl) msgListEl.innerHTML = '<div style="text-align:center; color:#ff0055; font-size:0.8rem; margin-top:20px;">BACKEND UNREACHABLE</div>';
                 }
             };
@@ -770,6 +800,8 @@
             window.sendMessageHandler = async (text) => {
                 if (!text) return;
                 try {
+                    const apiBase = backendApiBase || await refreshBackendBase(msgListEl);
+                    if (!apiBase) throw new Error('No backend available');
                     if (btnEl) btnEl.disabled = true;
                     if (inputEl) inputEl.disabled = true;
                     if (btnEl) btnEl.textContent = 'SENDING...';
