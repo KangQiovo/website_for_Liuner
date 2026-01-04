@@ -18,34 +18,112 @@
         
         /* 作者页面的渐变背景层 */
         #author-bg-layer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, #1a0020 0%, #050010 50%, #001020 100%);
+            position: fixed; top: 0; left: 240px; width: calc(100% - 240px); height: 100%;
+            background:
+                linear-gradient(135deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.75)),
+                url('bg.jpg');
+            background-size: cover;
+            background-position: center;
             z-index: -1; opacity: 0; transition: opacity 0.8s ease-in-out; pointer-events: none;
         }
         #author-bg-layer.visible { opacity: 1; }
 
+        @media screen and (max-width: 768px) {
+            #author-bg-layer {
+                left: 0;
+                width: 100%;
+                height: calc(100% - 80px);
+            }
+        }
+
         /* 开场动画 */
         #intro-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; z-index: 10000; transition: opacity 1s ease;
+            background: #05060a;
+            background-image:
+                linear-gradient(135deg, rgba(24, 178, 255, 0.05), transparent 55%),
+                radial-gradient(circle at 52% 30%, rgba(0, 255, 255, 0.04), transparent 36%),
+                repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0px, rgba(255, 255, 255, 0.025) 1px, transparent 1px, transparent 8px),
+                repeating-linear-gradient(90deg, rgba(0, 168, 255, 0.035) 0px, rgba(0, 168, 255, 0.035) 1px, transparent 1px, transparent 14px),
+                linear-gradient(180deg, #0b0d11 0%, #04060a 45%, #020304 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10000; transition: opacity 1.1s ease;
+            overflow: hidden;
         }
+        #intro-screen.fade-out { opacity: 0; }
+
+        #intro-screen::before {
+            content: "";
+            position: absolute; inset: 0;
+            background: repeating-linear-gradient(0deg, rgba(0, 255, 65, 0.05), rgba(0, 255, 65, 0.05) 2px, transparent 2px, transparent 6px);
+            opacity: 0.35; pointer-events: none; mix-blend-mode: screen;
+        }
+
+        #intro-screen::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 50% 50%, transparent 0%, rgba(0, 0, 0, 0.5) 75%, rgba(0, 0, 0, 0.8) 100%);
+            pointer-events: none;
+        }
+
         .intro-text {
-            color: #ff0000; font-family: 'Orbitron'; font-weight: 900; text-align: center;
+            color: #d1e6ff; font-family: 'Orbitron'; font-weight: 900; text-align: center;
             transform: scale(5); opacity: 0; animation: zoomIn 1.2s forwards;
-            font-size: 2rem;
+            font-size: 2rem; letter-spacing: 3px; text-shadow: 0 0 20px rgba(86, 164, 255, 0.4);
         }
         @keyframes zoomIn { 0% { transform: scale(5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        
+
+        #intro-status {
+            margin-top: 18px;
+            color: rgba(209, 230, 255, 0.8);
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 12px rgba(86, 164, 255, 0.35);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .intro-loader {
+            width: 18px; height: 18px; border-radius: 50%;
+            border: 2px solid rgba(209, 230, 255, 0.2);
+            border-top-color: #5db2ff;
+            animation: spin 1.4s linear infinite;
+            box-shadow: 0 0 18px rgba(93, 178, 255, 0.35);
+        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        #code-stream {
+            position: absolute; inset: 0; pointer-events: none;
+            font-family: 'Share Tech Mono', monospace;
+            color: #a3ffda;
+            opacity: 0.95;
+            overflow: hidden;
+        }
+        .code-line {
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 78vw;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 14px rgba(0, 255, 171, 0.3);
+            opacity: 0.92;
+            position: absolute;
+            line-height: 1.4;
+            transition: opacity 1s ease;
+        }
+        .code-line.fade-out {
+            opacity: 0;
+        }
+
         #start-btn {
-            margin-top: 50px; padding: 15px 40px; background: rgba(255, 0, 0, 0.1); 
-            border: 2px solid #ff0000; color: #ff0000; cursor: pointer; 
+            margin-top: 60px; padding: 15px 40px; background: rgba(93, 178, 255, 0.1);
+            border: 2px solid #5db2ff; color: #d1e6ff; cursor: pointer;
             font-family: 'Orbitron'; font-size: 1rem; letter-spacing: 3px;
             opacity: 0; animation: fadeIn 0.5s 1.5s forwards; transition: 0.3s;
-            box-shadow: 0 0 15px rgba(255,0,0,0.2);
+            box-shadow: 0 0 15px rgba(93,178,255,0.2);
             text-transform: uppercase;
         }
-        #start-btn:hover { background: rgba(255, 0, 0, 0.3); box-shadow: 0 0 25px rgba(255,0,0,0.6); }
+        #start-btn:hover { background: rgba(93, 178, 255, 0.25); box-shadow: 0 0 25px rgba(93,178,255,0.55); }
 
         /* 侧边栏 */
         #sidebar { 
@@ -142,7 +220,7 @@
             color: #fff; text-align: center;
         }
 
-        #ranking-panel { max-width: 900px; height: 85vh; padding: 20px; background: rgba(20, 25, 30, 0.4); }
+        #ranking-panel { max-width: 900px; height: auto; min-height: 70vh; padding: 20px; background: rgba(20, 25, 30, 0.4); }
         #ranking-panel h2 { font-size: 1.1rem; margin-bottom: 15px; flex-shrink: 0; }
         
         #network-panel { max-width: 550px; background: rgba(20, 25, 30, 0.3); }
@@ -155,53 +233,165 @@
         .stat-val { font-size: 1rem; color: #00ff41; margin-top: 5px; font-family: 'Orbitron'; }
         
         .embed-container {
-            flex: 1; width: 100%; height: 100%;
+            width: 100%;
+            margin: 0 auto;
+            aspect-ratio: 16 / 9;
+            max-height: 68vh;
+            min-height: 420px;
             border-radius: 12px; overflow: hidden;
             border: 1px solid rgba(0, 255, 65, 0.2);
             background: transparent; position: relative;
         }
         .embed-container iframe { width: 100%; height: 100%; border: none; display: block; }
-        .rank-iframe-wrapper { width: 100%; height: 100%; filter: invert(0.92) hue-rotate(180deg) contrast(0.9); background: #fff; }
+        .rank-iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: #0a0c12;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .rank-iframe-wrapper iframe {
+            background: #0a0c12;
+            filter: none;
+            width: 115%;
+            height: 115%;
+            transform: scale(0.85);
+            transform-origin: top center;
+        }
+
+        .rank-loader {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: radial-gradient(circle at 50% 40%, rgba(0, 255, 65, 0.08), rgba(0, 0, 0, 0.75));
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            transition: opacity 0.35s ease;
+            pointer-events: none;
+        }
+        .rank-loader.hidden { opacity: 0; }
+        .rank-spinner {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 255, 65, 0.3);
+            border-top-color: #00ff41;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 18px rgba(0, 255, 65, 0.25);
+        }
 
         /* 留言板 (Love Panel) 调整 */
-        #love-panel { border-color: rgba(255, 0, 85, 0.3); box-shadow: 0 0 40px rgba(255, 0, 85, 0.15); height: 70vh; justify-content: flex-start;}
-        #love-panel h2 { color: #ff0055; border-bottom: 1px solid rgba(255, 0, 85, 0.3); margin-bottom: 10px; }
-        .love-input-group { display: flex; flex-direction: row; align-items: center; margin-top: 10px; width: 100%; gap: 10px; flex-shrink: 0; }
+        #love-panel { border-color: rgba(255, 0, 85, 0.4); box-shadow: 0 0 45px rgba(255, 0, 85, 0.2); height: 70vh; justify-content: center; align-items: center; }
+        .signal-shell {
+            width: min(520px, 100%);
+            background:
+                linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.85)),
+                radial-gradient(circle at 20% 20%, rgba(255,0,85,0.08), rgba(0,0,0,0.5) 45%),
+                radial-gradient(circle at 80% 0%, rgba(0,255,255,0.08), rgba(0,0,0,0.5) 35%),
+                url('icon.jpg');
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(255, 0, 85, 0.5);
+            border-radius: 18px;
+            padding: 26px 28px;
+            box-shadow: 0 0 25px rgba(255,0,85,0.25), inset 0 0 25px rgba(255,0,85,0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .signal-shell::before {
+            content: "";
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,0,85,0.2), transparent 40%, rgba(0,255,255,0.15));
+            opacity: 0.35;
+            pointer-events: none;
+        }
+        .signal-shell::after {
+            content: "";
+            position: absolute; inset: 10px;
+            border: 1px solid rgba(255, 0, 85, 0.4);
+            border-radius: 12px;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .signal-title { text-align: center; color: #ff3b8d; font-family: 'Orbitron'; letter-spacing: 3px; font-weight: 900; border: none; margin: 0; padding-bottom: 0; }
+        .signal-subtitle { text-align: center; color: rgba(255,255,255,0.6); font-size: 0.7rem; letter-spacing: 1px; }
+        .love-input-group { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; flex-shrink: 0; z-index: 1; }
         .love-input-group.hidden { opacity: 0; pointer-events: none; }
         #love-input {
-            background: rgba(0, 0, 0, 0.3); border: 1px solid #ff0055; color: #ff0055;
-            font-family: 'Orbitron'; font-size: 1rem; flex: 1; 
-            padding: 12px; outline: none; letter-spacing: 1px; border-radius: 8px;
-            box-shadow: 0 0 10px rgba(255, 0, 85, 0.1); transition: 0.3s;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #ff3b8d;
+            color: #fff;
+            font-family: 'Share Tech Mono';
+            font-size: 1rem;
+            padding: 14px 16px;
+            outline: none;
+            letter-spacing: 1px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 8px rgba(255, 0, 85, 0.3), 0 0 12px rgba(255, 0, 85, 0.25);
+            transition: all 0.25s ease;
         }
-        #love-input:focus { box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); background: rgba(0,0,0,0.5); }
+        #love-input:focus { border-color: #ff5dac; box-shadow: inset 0 0 10px rgba(255, 0, 85, 0.4), 0 0 18px rgba(255, 0, 85, 0.35); }
         #send-love-btn {
-            padding: 12px 20px; background: rgba(255, 0, 85, 0.15); border: 1px solid #ff0055; 
-            color: #ff0055; font-family: 'Orbitron'; font-size: 0.9rem; cursor: pointer; letter-spacing: 1px; 
-            transition: all 0.3s; border-radius: 8px; white-space: nowrap;
+            padding: 14px;
+            background: linear-gradient(90deg, rgba(255, 0, 85, 0.25), rgba(255, 0, 85, 0.5));
+            border: 1px solid #ff3b8d;
+            color: #fff;
+            font-family: 'Orbitron';
+            font-size: 1rem;
+            cursor: pointer;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            border-radius: 10px;
+            text-transform: uppercase;
+            box-shadow: 0 0 18px rgba(255, 0, 85, 0.35);
         }
-        #send-love-btn:hover { background: #ff0055; color: #fff; box-shadow: 0 0 15px #ff0055; }
-        
+        #send-love-btn:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(255, 0, 85, 0.55); }
+        #send-love-btn:active { transform: translateY(0); }
+
         /* 留言列表样式 */
         #message-list {
-            flex: 1; width: 100%; overflow-y: auto; margin-top: 20px; padding-right: 5px;
-            display: flex; flex-direction: column; gap: 10px;
-            min-height: 200px;
+            max-height: 240px;
+            width: 100%;
+            overflow-y: auto;
+            margin-top: 4px;
+            padding-right: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 150px;
+            z-index: 1;
         }
         .message-item {
-            background: rgba(255, 0, 85, 0.05); border-left: 3px solid #ff0055;
-            padding: 10px; border-radius: 4px; animation: fadeInMsg 0.5s ease;
-            display: flex; flex-direction: column;
-            flex-shrink: 0; /* Prevent crushing */
+            background: rgba(255, 0, 85, 0.06);
+            border-left: 3px solid #ff3b8d;
+            padding: 10px 12px;
+            border-radius: 6px;
+            animation: fadeInMsg 0.5s ease;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            box-shadow: 0 0 12px rgba(255, 0, 85, 0.15);
         }
-        .msg-text { color: #fff; font-size: 0.9rem; word-break: break-all; font-family: 'Share Tech Mono'; }
-        .msg-time { color: rgba(255,255,255,0.3); font-size: 0.6rem; text-align: right; margin-top: 5px; }
+        .msg-text { color: #fff; font-size: 0.95rem; word-break: break-all; font-family: 'Share Tech Mono'; }
+        .msg-time { color: rgba(255,255,255,0.4); font-size: 0.65rem; text-align: right; margin-top: 6px; }
         @keyframes fadeInMsg { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* 滚动条美化 */
-        #message-list::-webkit-scrollbar { width: 5px; }
-        #message-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
-        #message-list::-webkit-scrollbar-thumb { background: rgba(255, 0, 85, 0.3); border-radius: 5px; }
+        #message-list::-webkit-scrollbar { width: 6px; }
+        #message-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.15); border-radius: 6px; }
+        #message-list::-webkit-scrollbar-thumb { background: rgba(255, 0, 85, 0.4); border-radius: 6px; }
 
         /* 粒子层 */
         #impact-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 20000; pointer-events: none; overflow: hidden; display: flex; justify-content: center; align-items: center; perspective: 1000px; }
@@ -218,9 +408,9 @@
         /* 作者页面 */
         .author-avatar { width: 120px; height: 120px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.2); margin: 0 auto 25px auto; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #000; box-shadow: 0 0 30px rgba(255,255,255,0.15); }
         .author-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .douyin-btn { display: inline-flex; align-items: center; justify-content: center; margin-top: 30px; width: 64px; height: 64px; background: #000; border-radius: 12px; cursor: pointer; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.2); }
-        .douyin-btn:hover { transform: scale(1.1); box-shadow: 0 0 25px rgba(255, 255, 255, 0.5); border-color: #fff; }
-        .douyin-svg { width: 32px; height: 32px; fill: #fff; }
+        .douyin-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; margin-top: 30px; width: 64px; height: 64px; background: transparent; border-radius: 12px; cursor: pointer; border: none; box-shadow: none; outline: none; -webkit-tap-highlight-color: transparent; -webkit-appearance: none; appearance: none; }
+        .douyin-btn:hover, .douyin-btn:focus, .douyin-btn:focus-visible, .douyin-btn:active { outline: none; box-shadow: none; background: transparent; transform: none; }
+        .douyin-img { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 36px; height: 36px; object-fit: contain; display: block; pointer-events: none; }
 
         #-clock { font-size: 1.5rem; color: #00ff41; text-align: center; margin-bottom: 20px; text-shadow: 0 0 10px #00ff41; font-family: 'Share Tech Mono'; }
         h2 { text-align: center; margin-bottom: 20px; font-size: 1.3rem; color: #00ff41; letter-spacing: 3px; border-bottom: 1px solid rgba(0,255,65,0.3); padding-bottom: 10px; text-shadow: 0 0 10px rgba(0,255,65,0.4); }
@@ -254,8 +444,8 @@
 
         /* 左下角友链样式 - 常驻设计 */
         .friend-link {
-            position: fixed; 
-            bottom: 20px; 
+            position: fixed;
+            bottom: 20px;
             left: 20px;
             z-index: 20001; /* 极高层级，确保在 intro-screen (10000) 之上 */
             display: flex; 
@@ -273,6 +463,11 @@
             /* 确保可见性 */
             visibility: visible !important;
             opacity: 1 !important;
+        }
+        .friend-link.hidden {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
         }
         .friend-link:hover {
             border-color: #00ff41;
@@ -304,15 +499,45 @@
             text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
         }
 
+        .friend-label {
+            padding: 4px 10px;
+            background: rgba(0, 255, 65, 0.15);
+            color: #00ff41;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            border-radius: 999px;
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+        }
+
         /* 手机端适配：抬高位置避免被可能的底部UI遮挡 */
         @media screen and (max-width: 768px) {
-            .friend-link { 
+            body { overflow-y: auto; }
+            .friend-link {
                 bottom: 80px; /* 给底部导航栏留出空间 */
-                left: 15px; 
-                padding: 6px 14px; 
+                left: 15px;
+                padding: 6px 14px;
             }
             .friend-link span { font-size: 0.75rem; }
             .friend-link img { width: 24px; height: 24px; }
+            #main-stage { align-items: flex-start; padding-top: 12px; }
+            .content-panel {
+                width: 94%;
+                max-width: none;
+                max-height: 72vh;
+                border-radius: 14px;
+                top: 10px;
+            }
+            #ranking-panel { min-height: 60vh; padding: 16px; }
+            .embed-container {
+                width: 100%;
+                aspect-ratio: 16 / 9;
+                min-height: 320px;
+                max-height: 65vh;
+            }
+            #network-panel { max-width: 100%; }
+            .realtime-stats { flex-direction: column; gap: 10px; }
+            .stat-item { width: 100%; }
+            #start-btn { margin-top: 40px; }
         }
     </style>
 </head>
@@ -326,15 +551,18 @@
 
     <!-- 友链添加到页面主体 - 常驻显示 -->
     <!-- 注意：z-index 设置为 20001，高于 intro-screen，所以加载时就可见 -->
-    <a href="https://kangqiovo.com" target="_blank" class="friend-link">
+    <a href="https://kangqiovo.com" target="_blank" class="friend-link hidden">
         <!-- 增加 onerror 处理防止图标加载失败 -->
         <img src="KangQi_.png" alt="KangQi" onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23222%22 stroke=%22%23555%22 stroke-width=%225%22/><text x=%2250%22 y=%2260%22 font-family=%22sans-serif%22 font-size=%2240%22 fill=%22%23fff%22 text-anchor=%22middle%22>K</text></svg>';">
         <span>KangQi</span>
+        <span class="friend-label">友链</span>
     </a>
 
     <div id="intro-screen">
+        <div id="code-stream"></div>
         <h1 class="intro-text">Liuner Creative</h1>
-        <button id="start-btn" onclick="enterSystem()">START SYSTEM</button>
+        <div id="intro-status"><span class="intro-loader"></span><span id="intro-status-text">INITIALIZING MATRIX...</span></div>
+        <button id="start-btn" onclick="enterSystem()">ENTER SYSTEM</button>
     </div>
 
     <nav id="sidebar">
@@ -344,7 +572,7 @@
         <div class="nav-item" onclick="switchTab('network-panel', this)">USTC 测速</div>
         <div class="nav-item" onclick="switchTab('ranking-panel', this)">性能榜 RANK</div>
         <!-- 留言板功能更新 -->
-        <div class="nav-item" onclick="switchTab('love-panel', this)">留言板 MESSAGE</div>
+        <div class="nav-item" onclick="switchTab('love-panel', this)">输入你所想</div>
         <!-- 默认激活作者介绍 -->
         <div class="nav-item author-active" onclick="switchTab('author-panel', this)">作者介绍 INTRO</div>
     </nav>
@@ -393,8 +621,12 @@
             <h2>GPU PERFORMANCE RANK</h2>
             <div class="embed-container">
                 <div class="rank-iframe-wrapper">
+                    <div class="rank-loader" id="rank-loader">
+                        <div class="rank-spinner"></div>
+                        <span>加载性能榜...</span>
+                    </div>
                     <!-- Added sandbox attribute for safety in preview environments -->
-                    <iframe src="https://www.socpk.com/gpu/" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+                    <iframe id="gpu-rank-iframe" src="https://www.socpk.com/allperf" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
                 </div>
             </div>
             <p style="font-size: 0.4rem; color: #00ff41; margin-top: 5px; text-align: center; opacity: 0.5;">SOURCE: SOCPK.COM</p>
@@ -402,19 +634,19 @@
 
         <!-- 留言板板块 -->
         <div id="love-panel" class="content-panel">
-            <h2>MESSAGE BOARD</h2>
-            <div style="text-align: center; color: #ff0055; font-size: 0.6rem; opacity: 0.8; letter-spacing: 1px; width: 100%;">
-                ANONYMOUS MESSAGES (PUBLIC)
-            </div>
-            
-            <div id="message-list">
-                <!-- Messages will appear here -->
-                <div style="text-align: center; color: rgba(255,255,255,0.3); font-size: 0.8rem; margin-top: 20px;">CONNECTING TO DATABASE...</div>
-            </div>
+            <div class="signal-shell">
+                <h2 class="signal-title">输入你所想</h2>
+                <div class="signal-subtitle">最多 10 字，所有访问者可见</div>
 
-            <div id="love-input-group" class="love-input-group">
-                <input type="text" id="love-input" maxlength="20" placeholder="Type message..." autocomplete="off">
-                <button id="send-love-btn" onclick="triggerLoveImpact()">SEND</button>
+                <div id="message-list">
+                    <!-- Messages will appear here -->
+                    <div style="text-align: center; color: rgba(255,255,255,0.3); font-size: 0.8rem; margin-top: 10px;">CONNECTING TO DATABASE...</div>
+                </div>
+
+                <div id="love-input-group" class="love-input-group">
+                    <input type="text" id="love-input" maxlength="10" placeholder="在此输入..." autocomplete="off">
+                    <button id="send-love-btn" onclick="triggerLoveImpact()">TRANSMIT</button>
+                </div>
             </div>
         </div>
 
@@ -432,10 +664,7 @@
                     在抖音拥有百万点赞
                 </p>
                 <a href="https://www.douyin.com/user/MS4wLjABAAAAbq5gAvTbPJ1kBCMblmPNjxvj8cNgzlzWebe5YvGVnRbFOfYjk09Vg_RgSDVJXKrm?from_tab_name=main" target="_blank" class="douyin-btn">
-                    <!-- 官方抖音 Logo Path -->
-                    <svg class="douyin-svg" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M783.2 245.2c-54.8-5.6-107.8-27-151.6-60.6-25-19.2-46.6-42.2-64.6-67.6V26.6h-172v558c0 13.8-2.6 27-7.4 39.4-10.4 27.2-32.8 48.4-60.8 57.2-12.2 3.8-25.2 5.8-38.6 5.8-35.6 0-68-14.4-91.2-37.6-23.2-23.2-37.6-55.6-37.6-91.2 0-35.6 14.4-68 37.6-91.2 23.2-23.2 55.6-37.6 91.2-37.6 5.8 0 11.4 0.4 17 1.2v-166c-5.6-0.6-11.2-1-17-1-66.8 0-129.6 21.8-180.4 58.4C102 358.2 68 414.2 68 477c0 119.2 96.8 216 216 216s216-96.8 216-216V280c36.2 20.8 77.2 33.2 121.2 34.6 15 0.4 29.8-0.6 44.4-2.8v-112c-12.8 2.2-25.8 3.4-39 3.4-2.6 0-5.2 0-7.8-0.2z"/>
-                    </svg>
+                    <img src="dy.png" alt="Douyin" class="douyin-img" onerror="this.style.display='none';">
                 </a>
                 <p style="font-size: 0.6rem; color: rgba(255,255,255,0.4); margin-top: 10px;">CLICK LOGO TO VISIT</p>
             </div>
@@ -450,6 +679,11 @@
 
         // Try-catch block for JSON parsing to prevent white screen of death
         let firebaseConfig = null;
+        let backendPollTimer = null;
+        const backendPollInterval = 10000;
+        let backendApiBase = null;
+        let backendResolving = false;
+        window.sendMessageHandler = null;
         try {
             // Check if variable exists before using it to avoid ReferenceError
             if (typeof __firebase_config !== 'undefined') {
@@ -463,7 +697,7 @@
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
             const db = getFirestore(app);
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const boardId = 'global-signal-board';
 
             // Auth logic refactored to support Custom Tokens
             const initAuth = async () => {
@@ -474,7 +708,7 @@
                         await signInAnonymously(auth);
                     }
                     console.log("Logged in successfully");
-                    setupMessageListener(db, appId);
+                    setupMessageListener(db, boardId);
                 } catch (error) {
                     console.error("Auth failed:", error);
                     document.getElementById('message-list').innerHTML = '<div style="text-align:center; color:red; margin-top:20px;">AUTH FAILED</div>';
@@ -487,7 +721,7 @@
             window.saveMessageToFirebase = async (text) => {
                 if (!auth.currentUser) return;
                 try {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'messages'), {
+                    await addDoc(collection(db, 'artifacts', boardId, 'public', 'data', 'messages'), {
                         text: text,
                         timestamp: serverTimestamp(),
                         uid: auth.currentUser.uid
@@ -497,16 +731,16 @@
                     showToast("SEND FAILED");
                 }
             };
+            window.sendMessageHandler = window.saveMessageToFirebase;
         } else {
-             // Handle offline mode nicely
-             document.getElementById('message-list').innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; margin-top:20px;">DATABASE OFFLINE</div>';
+            initCustomBackendBridge();
         }
 
         // 监听留言
-        function setupMessageListener(db, appId) {
+        function setupMessageListener(db, boardId) {
             const msgListEl = document.getElementById('message-list');
             // 获取 public data 下的 messages
-            const q = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
+            const q = collection(db, 'artifacts', boardId, 'public', 'data', 'messages');
             
             onSnapshot(q, (snapshot) => {
                 const messages = [];
@@ -517,38 +751,313 @@
                 // 前端排序：按时间倒序
                 messages.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
 
-                msgListEl.innerHTML = '';
-                if (messages.length === 0) {
-                    msgListEl.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; margin-top:20px;">NO MESSAGES YET</div>';
-                    return;
-                }
-
-                messages.forEach(msg => {
-                    const div = document.createElement('div');
-                    div.className = 'message-item';
-                    const timeStr = msg.timestamp ? new Date(msg.timestamp.seconds * 1000).toLocaleString() : 'Just now';
-                    div.innerHTML = `
-                        <div class="msg-text">${escapeHtml(msg.text)}</div>
-                        <div class="msg-time">${timeStr}</div>
-                    `;
-                    msgListEl.appendChild(div);
-                });
+                renderMessages(msgListEl, messages);
             }, (error) => {
                 console.error("Error fetching messages:", error);
                 msgListEl.innerHTML = '<div style="text-align:center; color:#ff0055; font-size:0.8rem; margin-top:20px;">CONNECTION FAILED</div>';
             });
         }
 
+        async function resolveApiBase() {
+            const explicit = (typeof __message_api_base !== 'undefined' && __message_api_base)
+                ? __message_api_base
+                : null;
+
+            const candidates = [];
+            if (explicit) candidates.push(explicit);
+
+            const originBase = `${location.origin}/api`;
+            candidates.push(originBase);
+
+            const host = location.hostname;
+            if (host) {
+                const sameProto = `${location.protocol}//${host}:8787/api`;
+                if (!candidates.includes(sameProto)) candidates.push(sameProto);
+
+                if (location.protocol === 'https:') {
+                    const httpAlt = `http://${host}:8787/api`;
+                    if (!candidates.includes(httpAlt)) candidates.push(httpAlt);
+                }
+            }
+
+            for (const base of candidates) {
+                const ok = await pingBackend(base);
+                if (ok) return base.replace(/\/$/, '');
+            }
+
+            return null;
+        }
+
+        async function pingBackend(base) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 3000);
+            try {
+                const normalized = base.replace(/\/$/, '');
+                const healthRes = await fetch(`${normalized}/health?ping=${Date.now()}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    mode: 'cors',
+                    signal: controller.signal
+                });
+                if (healthRes.ok) return true;
+
+                const res = await fetch(`${normalized}/messages?ping=${Date.now()}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    mode: 'cors',
+                    signal: controller.signal
+                });
+                return res.ok;
+            } catch (err) {
+                return false;
+            } finally {
+                clearTimeout(timeout);
+            }
+        }
+
+        async function refreshBackendBase(msgListEl) {
+            if (backendResolving) return backendApiBase;
+            backendResolving = true;
+            try {
+                const detectedBase = await resolveApiBase();
+                const fallbackBase = (typeof __message_api_base !== 'undefined' && __message_api_base) || `${location.origin}/api`;
+                backendApiBase = (detectedBase || fallbackBase || '').replace(/\/$/, '');
+
+                if (!detectedBase && msgListEl) {
+                    msgListEl.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.6); font-size:0.8rem; margin-top:20px;">CONNECTING TO BACKEND...</div>';
+                }
+
+                return backendApiBase;
+            } finally {
+                backendResolving = false;
+            }
+        }
+
+        async function initCustomBackendBridge() {
+            const msgListEl = document.getElementById('message-list');
+            const inputEl = document.getElementById('love-input');
+            const btnEl = document.getElementById('send-love-btn');
+            await refreshBackendBase(msgListEl);
+
+            const loadMessages = async () => {
+                const apiBase = backendApiBase || await refreshBackendBase(msgListEl);
+                if (!apiBase) {
+                    setLoveBoardDisabled('BACKEND OFFLINE');
+                    return;
+                }
+                try {
+                    const res = await fetch(`${apiBase}/messages`, { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) throw new Error('Bad status');
+                    const payload = await res.json();
+                    const messages = Array.isArray(payload) ? payload : (payload?.data || []);
+                    renderMessages(msgListEl, messages);
+                } catch (err) {
+                    console.error('Backend fetch failed', err);
+                    await refreshBackendBase(msgListEl);
+                    if (msgListEl) msgListEl.innerHTML = '<div style="text-align:center; color:#ff0055; font-size:0.8rem; margin-top:20px;">BACKEND UNREACHABLE</div>';
+                }
+            };
+
+            window.sendMessageHandler = async (text) => {
+                if (!text) return;
+                try {
+                    const apiBase = backendApiBase || await refreshBackendBase(msgListEl);
+                    if (!apiBase) throw new Error('No backend available');
+                    if (btnEl) btnEl.disabled = true;
+                    if (inputEl) inputEl.disabled = true;
+                    if (btnEl) btnEl.textContent = 'SENDING...';
+                    const res = await fetch(`${apiBase}/messages`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text })
+                    });
+                    if (!res.ok) throw new Error('Post failed');
+                    await loadMessages();
+                    showToast('TRANSMITTED');
+                } catch (err) {
+                    console.error('Backend post failed', err);
+                    showToast('BACKEND ERROR');
+                } finally {
+                    if (btnEl) btnEl.disabled = false;
+                    if (inputEl) inputEl.disabled = false;
+                    if (btnEl) btnEl.textContent = 'TRANSMIT';
+                }
+            };
+
+            if (btnEl) btnEl.disabled = false;
+            if (inputEl) { inputEl.disabled = false; inputEl.placeholder = '在此输入...'; inputEl.style.opacity = '1'; }
+            await loadMessages();
+            backendPollTimer = setInterval(loadMessages, backendPollInterval);
+        }
+
+        function renderMessages(msgListEl, messages) {
+            if (!msgListEl) return;
+            msgListEl.innerHTML = '';
+            if (!messages || messages.length === 0) {
+                msgListEl.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; margin-top:20px;">NO MESSAGES YET</div>';
+                return;
+            }
+
+            messages
+                .map(msg => ({
+                    text: msg.text || msg.message || '',
+                    timestamp: msg.timestamp || msg.createdAt || msg.created_at || null
+                }))
+                .sort((a, b) => {
+                    const ta = typeof a.timestamp === 'object' && a.timestamp?.seconds ? a.timestamp.seconds * 1000 : Date.parse(a.timestamp) || 0;
+                    const tb = typeof b.timestamp === 'object' && b.timestamp?.seconds ? b.timestamp.seconds * 1000 : Date.parse(b.timestamp) || 0;
+                    return tb - ta;
+                })
+                .forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = 'message-item';
+                    const t = msg.timestamp;
+                    const ts = (typeof t === 'object' && t?.seconds) ? new Date(t.seconds * 1000) : (t ? new Date(t) : new Date());
+                    const timeStr = ts.toLocaleString();
+                    div.innerHTML = `
+                        <div class="msg-text">${escapeHtml(msg.text)}</div>
+                        <div class="msg-time">${timeStr}</div>
+                    `;
+                    msgListEl.appendChild(div);
+                });
+        }
+
+        function setLoveBoardDisabled(text) {
+            const msgListEl = document.getElementById('message-list');
+            const offlineInput = document.getElementById('love-input');
+            const offlineBtn = document.getElementById('send-love-btn');
+            if (msgListEl) msgListEl.innerHTML = `<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:0.8rem; margin-top:20px;">${text}</div>`;
+            if (offlineInput) { offlineInput.disabled = true; offlineInput.placeholder = text; offlineInput.style.opacity = '0.6'; }
+            if (offlineBtn) { offlineBtn.disabled = true; offlineBtn.style.opacity = '0.6'; offlineBtn.innerText = 'OFFLINE'; }
+        }
+
         function escapeHtml(text) {
             if (!text) return "";
             return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
+
+        function initRankEmbed() {
+            const iframe = document.getElementById('gpu-rank-iframe');
+            const loader = document.getElementById('rank-loader');
+            if (!iframe || !loader) return;
+            const hideLoader = () => loader.classList.add('hidden');
+            const fallback = setTimeout(hideLoader, 9000);
+            iframe.addEventListener('load', () => { hideLoader(); clearTimeout(fallback); });
+            iframe.addEventListener('error', () => { loader.querySelector('span').textContent = '加载异常，尝试重新打开'; });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initRankEmbed();
+            playIntroSequence();
+        });
     </script>
 
     <script>
-        let userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone; 
+        let userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         let lastFrameTime = performance.now(), frameCount = 0;
         let isTestRunning = false;
+        let introFinished = false;
+        let codeRainTimer = null;
+        const activeCodeSpots = [];
+
+        const introCodeLines = [
+            "init buffer := {}",
+            "ssh -L 1337:core.guard -- handshake: OK",
+            "await fetch('/liuner/system'): response 200",
+            "checksum::verify(ghost_packet) -> true",
+            "spawn :: matrix.render(fps=144)",
+            "trace[impact-layer]: attached",
+            "ping core-node ... 12ms",
+            "load pipeline::neon.glow",
+            "gamma::tweak(alpha=0.82)",
+            "sync timeline @ 00:00:01.337",
+            "push state => AUTHOR_PANEL",
+            "encrypt(payload) => 0x9fa7...",
+            "stack.pop() -> intro.complete"
+        ];
+
+        function setIntroStatus(text) {
+            const el = document.getElementById('intro-status-text');
+            if (el) el.textContent = text;
+        }
+
+        function spawnCodeLine(text) {
+            const stream = document.getElementById('code-stream');
+            if (!stream) return;
+            const line = document.createElement('div');
+            line.className = 'code-line';
+            // 清理过期的点位记录
+            const now = performance.now();
+            for (let i = activeCodeSpots.length - 1; i >= 0; i--) {
+                if (activeCodeSpots[i].expires <= now) activeCodeSpots.splice(i, 1);
+            }
+
+            let posX = 2 + Math.random() * 92;
+            let posY = 6 + Math.random() * 88;
+            const minDistance = 12; // 尽量不要同时重合
+            let attempts = 0;
+            while (attempts < 10) {
+                const conflict = activeCodeSpots.some(({ x, y }) => {
+                    const dx = x - posX;
+                    const dy = y - posY;
+                    return Math.sqrt(dx * dx + dy * dy) < minDistance;
+                });
+                if (!conflict) break;
+                posX = 2 + Math.random() * 92;
+                posY = 6 + Math.random() * 88;
+                attempts++;
+            }
+            line.style.left = `${posX}%`;
+            line.style.top = `${posY}%`;
+            stream.appendChild(line);
+
+            const lifetime = 4200 + Math.random() * 1800;
+            activeCodeSpots.push({ x: posX, y: posY, expires: now + lifetime + 800 });
+
+            let idx = 0;
+            const typeTick = () => {
+                line.textContent = text.slice(0, idx) + (idx < text.length ? '|' : '');
+                idx++;
+                if (idx <= text.length) {
+                    setTimeout(typeTick, 22 + Math.random() * 50);
+                } else {
+                    line.textContent = text;
+                }
+            };
+            typeTick();
+
+            setTimeout(() => {
+                line.classList.add('fade-out');
+                setTimeout(() => line.remove(), 1100);
+            }, lifetime);
+        }
+
+        function startCodeRain() {
+            const burst = () => {
+                const lines = 2 + Math.floor(Math.random() * 3);
+                for (let i = 0; i < lines; i++) {
+                    const text = introCodeLines[Math.floor(Math.random() * introCodeLines.length)];
+                    setTimeout(() => spawnCodeLine(text), Math.random() * 300);
+                }
+            };
+            burst();
+            codeRainTimer = setInterval(burst, 1500);
+        }
+
+        function stopCodeRain() {
+            if (codeRainTimer) {
+                clearInterval(codeRainTimer);
+                codeRainTimer = null;
+            }
+        }
+
+        function playIntroSequence() {
+            setIntroStatus('INITIALIZING MATRIX...');
+            startCodeRain();
+            setTimeout(() => setIntroStatus('BOOTING RUNTIME...'), 1400);
+            setTimeout(() => setIntroStatus('LOADING PAYLOAD...'), 2800);
+            setTimeout(() => setIntroStatus('READY - TAP TO ENTER'), 4200);
+        }
 
         // Custom Toast Function
         function showToast(message) {
@@ -563,20 +1072,26 @@
         }
 
         function enterSystem() {
-            document.getElementById('intro-screen').style.opacity = '0';
+            if (introFinished) return;
+            introFinished = true;
+            stopCodeRain();
+            const intro = document.getElementById('intro-screen');
+            if (intro) intro.classList.add('fade-out');
             setTimeout(() => {
-                document.getElementById('intro-screen').style.display = 'none';
+                if (intro) intro.style.display = 'none';
                 document.getElementById('sidebar').style.visibility = 'visible';
                 document.getElementById('main-stage').style.visibility = 'visible';
+                const friendLink = document.querySelector('.friend-link');
+                if (friendLink) friendLink.classList.remove('hidden');
                 initMatrix();
                 updateInfo();
                 fetchIPData();
                 startClock();
-                initVisualEffects(); 
+                initVisualEffects();
                 detectRefreshRate();
                 // 默认背景：作者页需要渐变背景
                 document.getElementById('author-bg-layer').classList.add('visible');
-            }, 1000);
+            }, 1100);
         }
 
         function pingImage(url) {
@@ -622,35 +1137,47 @@
             }
         }
 
+        function updateSpeedUI(speedMbps) {
+            drawGauge(speedMbps);
+            document.getElementById('main-speed').innerText = Math.max(0, Math.floor(speedMbps));
+        }
+
         async function runRealDownloadTest() {
             const statusEl = document.getElementById('net-status');
             const btn = document.getElementById('run-test-btn');
-            // Use a highly available small image for download test simulation
             const targetUrl = 'https://www.ustc.edu.cn/_upload/tpl/00/0c/12/template12/images/logo.png';
-            
-            for(let i=0; i<15; i++) {
-                const tsStart = performance.now();
-                const requests = [];
-                for(let j=0; j<3; j++) {
-                    requests.push(pingImage(targetUrl));
-                }
-                
-                try {
-                    await Promise.all(requests);
-                    const tsEnd = performance.now();
-                    const duration = tsEnd - tsStart; 
-                    
-                    const dataSizeBits = 60 * 1024 * 8; 
-                    let speedMbps = (dataSizeBits / (duration / 1000)) / 1000000;
-                    
-                    speedMbps = speedMbps * 5; 
-                    if (speedMbps > 1000) speedMbps = 900 + Math.random() * 100; 
-                    if (speedMbps < 0) speedMbps = 0;
 
-                    drawGauge(speedMbps);
-                    document.getElementById('main-speed').innerText = Math.floor(speedMbps);
-                } catch (err) {}
-                await new Promise(r => setTimeout(r, 100));
+            statusEl.innerText = "RUNNING...";
+            updateSpeedUI(0);
+
+            const testStart = performance.now();
+            let round = 0;
+
+            while ((performance.now() - testStart) < 20000) {
+                round++;
+                try {
+                    const tsStart = performance.now();
+                    const resp = await fetch(targetUrl + '?t=' + Math.random(), { cache: 'no-store', mode: 'cors' });
+                    const blob = await resp.blob();
+                    const tsEnd = performance.now();
+
+                    const duration = tsEnd - tsStart; // ms
+                    const dataSizeBits = (blob.size || 60 * 1024) * 8; // fallback if size missing
+                    let speedMbps = (dataSizeBits / (duration / 1000)) / 1000000;
+
+                    speedMbps = speedMbps * 5;
+                    if (speedMbps > 1000) speedMbps = 900 + Math.random() * 100;
+                    if (speedMbps < 0 || !Number.isFinite(speedMbps)) speedMbps = 0;
+
+                    updateSpeedUI(speedMbps);
+                    statusEl.innerText = `ROUND ${round}`;
+                } catch (err) {
+                    const fallbackSpeed = 10 + Math.random() * 10;
+                    updateSpeedUI(fallbackSpeed);
+                    statusEl.innerText = "NETWORK ISSUE";
+                }
+
+                await new Promise(r => setTimeout(r, 150));
             }
 
             isTestRunning = false;
@@ -767,15 +1294,59 @@
         }
 
         async function fetchIPData() {
+            const ipLabel = document.getElementById('ip-location');
+            const resolveIPv4 = async () => {
+                const endpoints = [
+                    async () => {
+                        const res = await fetch('https://api4.ipify.org?format=json');
+                        if (!res.ok) throw new Error('ipify v4 failed');
+                        const payload = await res.json();
+                        return payload?.ip;
+                    },
+                    async () => {
+                        const res = await fetch('https://ipv4.icanhazip.com');
+                        if (!res.ok) throw new Error('icanhazip failed');
+                        return (await res.text()).trim();
+                    },
+                ];
+
+                for (const resolver of endpoints) {
+                    try { const ipv4 = await resolver(); if (ipv4) return ipv4; } catch (err) { /* ignore and try next */ }
+                }
+                return null;
+            };
+
             try {
-                // Using a fallback mechanism if ipapi is rate limited
+                const ipv4 = await resolveIPv4();
+                if (!ipv4) throw new Error('no ipv4');
+
+                let countryName = '';
+                try {
+                    const locRes = await fetch(`https://ipapi.co/${ipv4}/json/`);
+                    if (locRes.ok) {
+                        const loc = await locRes.json();
+                        countryName = loc.country_name || loc.country || '';
+                        if (loc.timezone) userTimezone = loc.timezone;
+                    }
+                } catch (locErr) {
+                    console.warn('Location lookup failed', locErr);
+                }
+
+                ipLabel.innerText = countryName ? `${ipv4} (${countryName})` : ipv4;
+                return;
+            } catch (primaryErr) {
+                console.warn('IPv4 lookup failed, falling back', primaryErr);
+            }
+
+            try {
                 const res = await fetch('https://ipapi.co/json/');
                 if (!res.ok) throw new Error("API Limit");
                 const d = await res.json();
-                document.getElementById('ip-location').innerText = `${d.ip} (${d.country_name})`;
+                const bestIP = (d.ip && d.ip.includes(':') && d.ipv4) ? d.ipv4 : d.ip;
+                ipLabel.innerText = bestIP ? `${bestIP} (${d.country_name || ''})` : 'UNKNOWN';
                 if (d.timezone) userTimezone = d.timezone;
-            } catch (e) { 
-                document.getElementById('ip-location').innerText = "OFFLINE / BLOCKED"; 
+            } catch (e) {
+                ipLabel.innerText = "OFFLINE / BLOCKED";
             }
         }
 
@@ -854,6 +1425,23 @@
             setInterval(draw, 35);
         }
 
+        // 禁用右键菜单、保存、查看源码及常见的开发者快捷键
+        window.addEventListener('contextmenu', (e) => e.preventDefault(), { capture: true });
+        window.addEventListener('keydown', (e) => {
+            const key = (e.key || '').toLowerCase();
+            const blockCombos = (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['i', 'c', 'j', 'p'].includes(key)) ||
+                (e.metaKey && e.altKey && key === 'i')
+            );
+            const blockSaves = (e.ctrlKey || e.metaKey) && ['s', 'u', 'p'].includes(key);
+            if (blockCombos || blockSaves) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }, { capture: true });
+
         function triggerLoveImpact() {
             const input = document.getElementById('love-input');
             const val = input.value.trim();
@@ -861,7 +1449,7 @@
             const inputGroup = document.getElementById('love-input-group');
             
             if (!val) { showToast("PLEASE ENTER TEXT"); return; }
-            if (val.length > 20) { showToast("TOO LONG (MAX 20)"); return; }
+            if (val.length > 10) { showToast("TOO LONG (MAX 10)"); return; }
             
             // 触发视觉特效 (保持不变)
             inputGroup.classList.add('hidden');
@@ -886,9 +1474,11 @@
             }
             container.appendChild(fragment);
 
-            // 保存到 Firebase
-            if(window.saveMessageToFirebase) {
-                window.saveMessageToFirebase(val);
+            // 交给后端/Firestore
+            if (window.sendMessageHandler) {
+                window.sendMessageHandler(val);
+            } else {
+                showToast('SERVICE OFFLINE');
             }
 
             // 恢复输入框
