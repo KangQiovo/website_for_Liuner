@@ -233,11 +233,11 @@
         .stat-val { font-size: 1rem; color: #00ff41; margin-top: 5px; font-family: 'Orbitron'; }
         
         .embed-container {
-            width: 90%;
+            width: 100%;
             margin: 0 auto;
-            aspect-ratio: 21 / 9;
-            max-height: 60vh;
-            min-height: 360px;
+            aspect-ratio: 16 / 9;
+            max-height: 68vh;
+            min-height: 420px;
             border-radius: 12px; overflow: hidden;
             border: 1px solid rgba(0, 255, 65, 0.2);
             background: transparent; position: relative;
@@ -248,8 +248,19 @@
             width: 100%;
             height: 100%;
             background: #0a0c12;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
-        .rank-iframe-wrapper iframe { background: #0a0c12; filter: none; }
+        .rank-iframe-wrapper iframe {
+            background: #0a0c12;
+            filter: none;
+            width: 115%;
+            height: 115%;
+            transform: scale(0.85);
+            transform-origin: top center;
+        }
 
         .rank-loader {
             position: absolute;
@@ -519,12 +530,9 @@
             #ranking-panel { min-height: 60vh; padding: 16px; }
             .embed-container {
                 width: 100%;
-                aspect-ratio: 4 / 3;
-                min-height: 260px;
-                max-height: 55vh;
-                transform: scale(0.9);
-                transform-origin: top center;
-                height: calc(100% / 0.9);
+                aspect-ratio: 16 / 9;
+                min-height: 320px;
+                max-height: 65vh;
             }
             #network-panel { max-width: 100%; }
             .realtime-stats { flex-direction: column; gap: 10px; }
@@ -618,7 +626,7 @@
                         <span>加载性能榜...</span>
                     </div>
                     <!-- Added sandbox attribute for safety in preview environments -->
-                    <iframe id="gpu-rank-iframe" src="https://www.socpk.com/gpu/" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+                    <iframe id="gpu-rank-iframe" src="https://www.socpk.com/allperf" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
                 </div>
             </div>
             <p style="font-size: 0.4rem; color: #00ff41; margin-top: 5px; text-align: center; opacity: 0.5;">SOURCE: SOCPK.COM</p>
