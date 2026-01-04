@@ -747,15 +747,12 @@
             const msgListEl = document.getElementById('message-list');
             const inputEl = document.getElementById('love-input');
             const btnEl = document.getElementById('send-love-btn');
-            const apiBase = await resolveApiBase();
+            const detectedBase = await resolveApiBase();
+            const apiBase = detectedBase || (typeof __message_api_base !== 'undefined' && __message_api_base) || `${location.origin}/api`;
 
-            if (!apiBase) {
-                setLoveBoardDisabled('数据库离线，等待后端接入');
-                if (msgListEl) msgListEl.innerHTML = '<div style="text-align:center; color:#ff0055; font-size:0.8rem; margin-top:20px;">BACKEND UNREACHABLE</div>';
-                return;
+            if (!detectedBase && msgListEl) {
+                msgListEl.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.6); font-size:0.8rem; margin-top:20px;">CONNECTING TO BACKEND...</div>';
             }
-
-            if (msgListEl) msgListEl.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.6); font-size:0.8rem; margin-top:20px;">CONNECTING TO BACKEND...</div>';
 
             const loadMessages = async () => {
                 try {
