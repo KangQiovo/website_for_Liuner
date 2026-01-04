@@ -220,7 +220,7 @@
             color: #fff; text-align: center;
         }
 
-        #ranking-panel { max-width: 900px; height: 85vh; padding: 20px; background: rgba(20, 25, 30, 0.4); }
+        #ranking-panel { max-width: 900px; height: auto; min-height: 70vh; padding: 20px; background: rgba(20, 25, 30, 0.4); }
         #ranking-panel h2 { font-size: 1.1rem; margin-bottom: 15px; flex-shrink: 0; }
         
         #network-panel { max-width: 550px; background: rgba(20, 25, 30, 0.3); }
@@ -233,19 +233,48 @@
         .stat-val { font-size: 1rem; color: #00ff41; margin-top: 5px; font-family: 'Orbitron'; }
         
         .embed-container {
-            flex: 1; width: 100%; height: 100%;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            max-height: 72vh;
+            min-height: 420px;
             border-radius: 12px; overflow: hidden;
             border: 1px solid rgba(0, 255, 65, 0.2);
             background: transparent; position: relative;
         }
         .embed-container iframe { width: 100%; height: 100%; border: none; display: block; }
         .rank-iframe-wrapper {
+            position: relative;
             width: 100%;
             height: 100%;
-            background: #080a0f;
-            color-scheme: dark;
+            background: #0a0c12;
         }
-        .rank-iframe-wrapper iframe { background: #080a0f; color-scheme: dark; filter: none; }
+        .rank-iframe-wrapper iframe { background: #0a0c12; filter: none; }
+
+        .rank-loader {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: radial-gradient(circle at 50% 40%, rgba(0, 255, 65, 0.08), rgba(0, 0, 0, 0.75));
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            transition: opacity 0.35s ease;
+            pointer-events: none;
+        }
+        .rank-loader.hidden { opacity: 0; }
+        .rank-spinner {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 255, 65, 0.3);
+            border-top-color: #00ff41;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 18px rgba(0, 255, 65, 0.25);
+        }
 
         /* 留言板 (Love Panel) 调整 */
         #love-panel { border-color: rgba(255, 0, 85, 0.4); box-shadow: 0 0 45px rgba(255, 0, 85, 0.2); height: 70vh; justify-content: center; align-items: center; }
@@ -470,13 +499,35 @@
 
         /* 手机端适配：抬高位置避免被可能的底部UI遮挡 */
         @media screen and (max-width: 768px) {
-            .friend-link { 
+            body { overflow-y: auto; }
+            .friend-link {
                 bottom: 80px; /* 给底部导航栏留出空间 */
-                left: 15px; 
-                padding: 6px 14px; 
+                left: 15px;
+                padding: 6px 14px;
             }
             .friend-link span { font-size: 0.75rem; }
             .friend-link img { width: 24px; height: 24px; }
+            #main-stage { align-items: flex-start; padding-top: 12px; }
+            .content-panel {
+                width: 94%;
+                max-width: none;
+                max-height: 72vh;
+                border-radius: 14px;
+                top: 10px;
+            }
+            #ranking-panel { min-height: 60vh; padding: 16px; }
+            .embed-container {
+                aspect-ratio: 3 / 4;
+                min-height: 320px;
+                max-height: 65vh;
+                transform: scale(0.94);
+                transform-origin: top center;
+                height: calc(100% / 0.94);
+            }
+            #network-panel { max-width: 100%; }
+            .realtime-stats { flex-direction: column; gap: 10px; }
+            .stat-item { width: 100%; }
+            #start-btn { margin-top: 40px; }
         }
     </style>
 </head>
@@ -560,8 +611,12 @@
             <h2>GPU PERFORMANCE RANK</h2>
             <div class="embed-container">
                 <div class="rank-iframe-wrapper">
+                    <div class="rank-loader" id="rank-loader">
+                        <div class="rank-spinner"></div>
+                        <span>加载性能榜...</span>
+                    </div>
                     <!-- Added sandbox attribute for safety in preview environments -->
-                    <iframe src="https://www.socpk.com/gpu/" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+                    <iframe id="gpu-rank-iframe" src="https://www.socpk.com/gpu/" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
                 </div>
             </div>
             <p style="font-size: 0.4rem; color: #00ff41; margin-top: 5px; text-align: center; opacity: 0.5;">SOURCE: SOCPK.COM</p>
@@ -874,7 +929,18 @@
             return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
+        function initRankEmbed() {
+            const iframe = document.getElementById('gpu-rank-iframe');
+            const loader = document.getElementById('rank-loader');
+            if (!iframe || !loader) return;
+            const hideLoader = () => loader.classList.add('hidden');
+            const fallback = setTimeout(hideLoader, 9000);
+            iframe.addEventListener('load', () => { hideLoader(); clearTimeout(fallback); });
+            iframe.addEventListener('error', () => { loader.querySelector('span').textContent = '加载异常，尝试重新打开'; });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            initRankEmbed();
             playIntroSequence();
         });
     </script>
