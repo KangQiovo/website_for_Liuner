@@ -695,18 +695,63 @@
             });
         }
 
+        async function resolveApiBase() {
+            const explicit = (typeof __message_api_base !== 'undefined' && __message_api_base)
+                ? __message_api_base
+                : null;
+
+            const candidates = [];
+            if (explicit) candidates.push(explicit);
+
+            const originBase = `${location.origin}/api`;
+            candidates.push(originBase);
+
+            const host = location.hostname;
+            if (host) {
+                const sameProto = `${location.protocol}//${host}:8787/api`;
+                if (!candidates.includes(sameProto)) candidates.push(sameProto);
+
+                if (location.protocol === 'https:') {
+                    const httpAlt = `http://${host}:8787/api`;
+                    if (!candidates.includes(httpAlt)) candidates.push(httpAlt);
+                }
+            }
+
+            for (const base of candidates) {
+                const ok = await pingBackend(base);
+                if (ok) return base.replace(/\/$/, '');
+            }
+
+            return null;
+        }
+
+        async function pingBackend(base) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 3000);
+            try {
+                const res = await fetch(`${base.replace(/\/$/, '')}/messages?ping=${Date.now()}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    mode: 'cors',
+                    signal: controller.signal
+                });
+                return res.ok;
+            } catch (err) {
+                return false;
+            } finally {
+                clearTimeout(timeout);
+            }
+        }
+
         async function initCustomBackendBridge() {
             const msgListEl = document.getElementById('message-list');
             const inputEl = document.getElementById('love-input');
             const btnEl = document.getElementById('send-love-btn');
-            const apiBase = (typeof __message_api_base !== 'undefined' && __message_api_base)
-                ? __message_api_base
-                : ((location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-                    ? 'http://localhost:8787/api'
-                    : `${location.origin}/api`);
+            const apiBase = await resolveApiBase();
 
             if (!apiBase) {
                 setLoveBoardDisabled('数据库离线，等待后端接入');
+                if (msgListEl) msgListEl.innerHTML = '<div style="text-align:center; color:#ff0055; font-size:0.8rem; margin-top:20px;">BACKEND UNREACHABLE</div>';
                 return;
             }
 
